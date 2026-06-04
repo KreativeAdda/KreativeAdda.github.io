@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Private Admin | Kreative.Adda</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="admin-page">
+    <div class="noise"></div>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Kreative.Adda live website">
+        <img src="assets/logo.webp" alt="Kreative.Adda logo" />
+        <span>Kreative<span>.Adda</span></span>
+      </a>
+      <nav aria-label="Admin navigation">
+        <a href="index.html">Live Site</a>
+      </nav>
+    </header>
+
+    <main class="admin-shell">
+      <section class="login-panel" id="loginPanel">
+        <p class="eyebrow">Private dashboard</p>
+        <h1>Admin access</h1>
+        <p>Enter your local dashboard password to update Kreative.Adda.</p>
+        <form id="loginForm">
+          <label>
+            Password
+            <input id="passwordInput" type="password" autocomplete="current-password" placeholder="Enter password" required />
+          </label>
+          <button type="submit">Unlock Dashboard</button>
+          <p class="form-note">Demo password: <strong>avi123</strong>. Change it inside <code>admin.js</code> before sharing.</p>
+        </form>
+      </section>
+
+      <section class="dashboard hidden" id="dashboard">
+        <div class="section-heading">
+          <p class="eyebrow">Private website</p>
+          <h1>Update the live Kreative.Adda site</h1>
+        </div>
+
+        <div class="admin-grid">
+          <form class="admin-card" id="profileForm">
+            <h2>Profile & links</h2>
+            <label>
+              Owner name
+              <input id="ownerName" type="text" />
+            </label>
+            <label>
+              About me
+              <textarea id="aboutTextInput" rows="5"></textarea>
+            </label>
+            <label>
+              YouTube channel link
+              <input id="youtubeInput" type="url" placeholder="https://youtube.com/..." />
+            </label>
+            <label>
+              Instagram link
+              <input id="instagramInput" type="url" placeholder="https://instagram.com/..." />
+            </label>
+            <button type="submit">Save Profile</button>
+          </form>
+
+          <form class="admin-card" id="uploadForm">
+            <h2>Add photo or video</h2>
+            <label>
+              Title
+              <input id="itemTitle" type="text" placeholder="Example: Stage rehearsal moment" required />
+            </label>
+            <label>
+              Category
+              <select id="itemCategory" required></select>
+            </label>
+            <label>
+              Upload file
+              <input id="itemFile" type="file" accept="image/*,video/*" required />
+            </label>
+            <label>
+              Caption
+              <textarea id="itemCaption" rows="4" placeholder="Write a small memory, location or note."></textarea>
+            </label>
+            <button type="submit">Publish to Live Site</button>
+            <p class="form-note">Photos and videos are saved in this browser for local editing and preview.</p>
+          </form>
+        </div>
+
+        <section class="admin-card library">
+          <div class="library-head">
+            <h2>Current uploads</h2>
+            <button class="danger" id="resetButton" type="button">Reset Demo Content</button>
+          </div>
+          <div class="admin-items" id="adminItems"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="shared.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kreative.Adda | Avi Narang</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="Kreative.Adda home">
+        <img src="assets/logo.webp" alt="Kreative.Adda logo" />
+        <span>Kreative<span>.Adda</span></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#gallery">Gallery</a>
+        <a href="#about">About</a>
+        <a href="#social">Links</a>
+        <a class="admin-link" href="admin.html">Admin</a>
+      </nav>
+    </header>
+
+    <main id="home">
+      <section class="hero">
+        <div class="hero-art">
+          <img src="assets/logo.webp" alt="Kreative.Adda emblem" />
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">Avi Narang presents</p>
+          <h1>Kreative<span>.Adda</span></h1>
+          <p class="tagline">A Universe of Creativity, Music, Memories &amp; Divine Blessings</p>
+          <div class="hero-actions">
+            <a href="#gallery">Explore Adda</a>
+            <a class="ghost" href="#about">Meet Avi</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="marquee" aria-label="Creative categories">
+        <span>Dishes Photos</span>
+        <span>My Pics</span>
+        <span>Acting Videos</span>
+        <span>Bhajan &amp; Song Videos</span>
+        <span>Photography Items</span>
+        <span>Miscellaneous Stuff</span>
+      </section>
+
+      <section id="gallery" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Creative uploads</p>
+          <h2>Every mood gets its own stage.</h2>
+        </div>
+        <div class="filter-bar" id="categoryFilters" aria-label="Filter gallery categories"></div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+        <p class="empty-state" id="emptyState">No uploads yet. Open the private admin dashboard and add your first photo or video.</p>
+      </section>
+
+      <section id="about" class="about-band">
+        <div>
+          <p class="eyebrow">About me</p>
+          <h2 id="aboutTitle">Avi Narang</h2>
+        </div>
+        <p id="aboutText">
+          Welcome to my personal creative adda: a colorful space for food, photos, acting, devotional music, songs, photography and all the little memories that deserve a place of their own.
+        </p>
+      </section>
+
+      <section id="social" class="social-section">
+        <div class="section-heading">
+          <p class="eyebrow">Connect</p>
+          <h2>Follow the creative trail.</h2>
+        </div>
+        <div class="social-links">
+          <a id="youtubeLink" href="#" target="_blank" rel="noreferrer">YouTube Channel</a>
+          <a id="instagramLink" href="#" target="_blank" rel="noreferrer">Instagram</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Kreative.Adda by Avi Narang</span>
+      <span>Made for memories, music and creative moments.</span>
+    </footer>
+
+    <script src="shared.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

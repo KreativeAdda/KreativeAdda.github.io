@@ -1,58 +1,60 @@
-const state = () => window.KreativeAdda.loadState();
-let activeCategory = "all";
-
-const filters = document.querySelector("#categoryFilters");
-const gallery = document.querySelector("#galleryGrid");
+const { categories, content, categoryById } = window.KreativeAdda;
+const categoryGrid = document.querySelector("#categoryGrid");
+const galleryPanel = document.querySelector("#galleryPanel");
+const galleryGrid = document.querySelector("#galleryGrid");
 const emptyState = document.querySelector("#emptyState");
+const activeCategoryTitle = document.querySelector("#activeCategoryTitle");
+const activeCategoryLabel = document.querySelector("#activeCategoryLabel");
 
-function renderFilters() {
-  const allButton = document.createElement("button");
-  allButton.type = "button";
-  allButton.textContent = "All";
-  allButton.dataset.category = "all";
-  filters.append(allButton);
+function renderHome() {
+  document.querySelector("#dailyWord").textContent = content.daily.word;
+  document.querySelector("#dailyMeaning").textContent = content.daily.meaning;
+  document.querySelector("#dailyThought").textContent = content.daily.thought;
+  document.querySelector("#aboutTitle").textContent = content.profile.owner || "Avi Narang";
+  document.querySelector("#aboutText").textContent = content.profile.about || "";
 
-  window.KreativeAdda.categories.forEach((category) => {
+  const ownerPhoto = document.querySelector("#ownerPhoto");
+  ownerPhoto.src = content.profile.ownerPhoto || "assets/logo.webp";
+  ownerPhoto.onerror = () => { ownerPhoto.src = "assets/logo.webp"; };
+
+  setLink("#youtubeLink", content.profile.youtube);
+  setLink("#instagramLink", content.profile.instagram);
+  const emailLink = document.querySelector("#contactEmail");
+  if (content.profile.email) {
+    emailLink.href = `mailto:${content.profile.email}`;
+    emailLink.textContent = content.profile.email;
+  }
+}
+
+function renderCategories() {
+  categoryGrid.innerHTML = "";
+  categories.forEach((category) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = category.label;
-    button.dataset.category = category.id;
+    button.className = "category-tile";
     button.style.setProperty("--accent", category.accent);
-    filters.append(button);
-  });
-
-  filters.addEventListener("click", (event) => {
-    const button = event.target.closest("button");
-    if (!button) return;
-    activeCategory = button.dataset.category;
-    renderGallery();
+    button.innerHTML = `<span>${escapeHtml(category.label)}</span>`;
+    button.addEventListener("click", () => {
+      if (category.isContact) {
+        document.querySelector("#contact").scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+      openCategory(category.id);
+    });
+    categoryGrid.append(button);
   });
 }
 
-function mediaMarkup(item) {
-  if (item.type === "image") {
-    return `<img src="${item.src}" alt="${escapeHtml(item.title)}" loading="lazy" />`;
-  }
-
-  if (item.type === "video") {
-    return `<video src="${item.src}" controls preload="metadata"></video>`;
-  }
-
-  return `<div class="placeholder-art"><span>${escapeHtml(item.title.slice(0, 1))}</span></div>`;
-}
-
-function renderGallery() {
-  const current = state();
-  const items = activeCategory === "all" ? current.items : current.items.filter((item) => item.category === activeCategory);
-  gallery.innerHTML = "";
+function openCategory(categoryId) {
+  const category = categoryById(categoryId);
+  const items = content.items.filter((item) => item.category === categoryId);
+  galleryPanel.hidden = false;
+  activeCategoryLabel.textContent = "Now viewing";
+  activeCategoryTitle.textContent = category.label;
+  galleryGrid.innerHTML = "";
   emptyState.classList.toggle("visible", items.length === 0);
 
-  document.querySelectorAll(".filter-bar button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.category === activeCategory);
-  });
-
   items.forEach((item) => {
-    const category = window.KreativeAdda.categoryById(item.category);
     const card = document.createElement("article");
     card.className = "gallery-card";
     card.style.setProperty("--accent", category.accent);
@@ -62,40 +64,45 @@ function renderGallery() {
         <p>${escapeHtml(category.label)}</p>
         <h3>${escapeHtml(item.title)}</h3>
         <span>${escapeHtml(item.caption || "A Kreative.Adda memory.")}</span>
-      </div>
-    `;
-    gallery.append(card);
+      </div>`;
+    galleryGrid.append(card);
   });
+  galleryPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderProfile() {
-  const current = state();
-  document.querySelector("#aboutTitle").textContent = current.profile.owner || "Avi Narang";
-  document.querySelector("#aboutText").textContent = current.profile.about || "";
-  setSocialLink("#youtubeLink", current.profile.youtube, "YouTube Channel");
-  setSocialLink("#instagramLink", current.profile.instagram, "Instagram");
+function mediaMarkup(item) {
+  if (item.type === "image" && item.src) return `<img src="${item.src}" alt="${escapeHtml(item.title)}" loading="lazy" />`;
+  if (item.type === "youtube" && item.youtube) {
+    const embed = youtubeEmbedUrl(item.youtube);
+    return embed ? `<iframe src="${embed}" title="${escapeHtml(item.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>` : placeholderMarkup(item);
+  }
+  return placeholderMarkup(item);
 }
 
-function setSocialLink(selector, href, label) {
+function youtubeEmbedUrl(url) {
+  try {
+    const parsed = new URL(url);
+    let id = "";
+    if (parsed.hostname.includes("youtu.be")) id = parsed.pathname.slice(1);
+    if (parsed.hostname.includes("youtube.com")) id = parsed.searchParams.get("v") || parsed.pathname.split("/").pop();
+    return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}` : "";
+  } catch { return ""; }
+}
+
+function placeholderMarkup(item) {
+  return `<div class="placeholder-art"><span>${escapeHtml(item.title.slice(0, 1))}</span></div>`;
+}
+
+function setLink(selector, href) {
   const link = document.querySelector(selector);
   link.href = href && href !== "#" ? href : "#";
-  link.textContent = href && href !== "#" ? label : `${label} - add link in admin`;
+  link.classList.toggle("disabled", !href || href === "#");
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => {
-    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char];
-  });
+  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
 }
 
-renderFilters();
-renderProfile();
-renderGallery();
-window.addEventListener("storage", () => {
-  renderProfile();
-  renderGallery();
-});
-window.addEventListener("kreative:adda-updated", () => {
-  renderProfile();
-  renderGallery();
-});
+document.querySelector("#closeGallery").addEventListener("click", () => { galleryPanel.hidden = true; });
+renderHome();
+renderCategories();

@@ -17,7 +17,7 @@
         <a href="#gallery">Gallery</a>
         <a href="#about">About</a>
         <a href="#social">Links</a>
-        <a class="admin-link" href="admin.html">Admin</a>
+        <a href="#contact">Contact</a>
       </nav>
     </header>
 
@@ -34,36 +34,48 @@
             <a href="#gallery">Explore Adda</a>
             <a class="ghost" href="#about">Meet Avi</a>
           </div>
+          <aside class="daily-card" aria-label="Word and thought of the day">
+            <div>
+              <p>Word of the day</p>
+              <h2 id="dailyWord">Kreative</h2>
+              <span id="dailyMeaning">To shape everyday moments into memories, music and art.</span>
+            </div>
+            <div>
+              <p>Thought of the day</p>
+              <span id="dailyThought">Every day has one small spark worth saving.</span>
+            </div>
+          </aside>
         </div>
-      </section>
-
-      <section class="marquee" aria-label="Creative categories">
-        <span>Dishes Photos</span>
-        <span>My Pics</span>
-        <span>Acting Videos</span>
-        <span>Bhajan &amp; Song Videos</span>
-        <span>Photography Items</span>
-        <span>Miscellaneous Stuff</span>
       </section>
 
       <section id="gallery" class="section">
         <div class="section-heading">
-          <p class="eyebrow">Creative uploads</p>
-          <h2>Every mood gets its own stage.</h2>
+          <p class="eyebrow">Creative categories</p>
+          <h2>Choose a corner of the adda.</h2>
         </div>
-        <div class="filter-bar" id="categoryFilters" aria-label="Filter gallery categories"></div>
-        <div class="gallery-grid" id="galleryGrid"></div>
-        <p class="empty-state" id="emptyState">No uploads yet. Open the private admin dashboard and add your first photo or video.</p>
+        <div class="category-grid" id="categoryGrid"></div>
+        <div class="gallery-panel" id="galleryPanel" hidden>
+          <div class="gallery-panel-head">
+            <div>
+              <p class="eyebrow" id="activeCategoryLabel">Gallery</p>
+              <h2 id="activeCategoryTitle">Category</h2>
+            </div>
+            <button type="button" id="closeGallery">Close</button>
+          </div>
+          <div class="gallery-grid" id="galleryGrid"></div>
+          <p class="empty-state" id="emptyState">No public uploads yet for this category.</p>
+        </div>
       </section>
 
       <section id="about" class="about-band">
+        <div class="about-photo-wrap">
+          <img id="ownerPhoto" src="assets/owner-photo.jpg" alt="Avi Narang" />
+        </div>
         <div>
           <p class="eyebrow">About me</p>
           <h2 id="aboutTitle">Avi Narang</h2>
+          <p id="aboutText">Welcome to my personal creative adda: a colorful space for food, photos, natak, sargam, photography and all the little memories that deserve a place of their own.</p>
         </div>
-        <p id="aboutText">
-          Welcome to my personal creative adda: a colorful space for food, photos, acting, devotional music, songs, photography and all the little memories that deserve a place of their own.
-        </p>
       </section>
 
       <section id="social" class="social-section">
@@ -72,15 +84,21 @@
           <h2>Follow the creative trail.</h2>
         </div>
         <div class="social-links">
-          <a id="youtubeLink" href="#" target="_blank" rel="noreferrer">YouTube Channel</a>
-          <a id="instagramLink" href="#" target="_blank" rel="noreferrer">Instagram</a>
+          <a id="youtubeLink" href="#" target="_blank" rel="noreferrer" aria-label="YouTube"><span class="social-icon youtube-icon" aria-hidden="true"></span></a>
+          <a id="instagramLink" href="#" target="_blank" rel="noreferrer" aria-label="Instagram"><span class="social-icon instagram-icon" aria-hidden="true"></span></a>
         </div>
+      </section>
+
+      <section id="contact" class="contact-band">
+        <p class="eyebrow">Contact</p>
+        <h2>Let the conversation begin.</h2>
+        <a id="contactEmail" href="mailto:">Add email address</a>
       </section>
     </main>
 
     <footer>
       <span>Kreative.Adda by Avi Narang</span>
-      <span>Made for memories, music and creative moments.</span>
+      <a class="tiny-admin" href="admin.html">Content update guide</a>
     </footer>
 
     <script src="shared.js"></script>

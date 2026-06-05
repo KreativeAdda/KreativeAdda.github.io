@@ -1,4 +1,4 @@
-const adminPassword = "avi123";
+const adminPassword = "&onal15Neha28KA";
 const loginPanel = document.querySelector("#loginPanel");
 const dashboard = document.querySelector("#dashboard");
 const loginForm = document.querySelector("#loginForm");

@@ -18,11 +18,21 @@ const reviewForm = document.querySelector("#reviewForm");
 const reviewList = document.querySelector("#reviewList");
 let hasAvailableProducts = false;
 
+function setShopStatus() {
+  const shopLink = document.querySelector("#shopNavLink");
+  if (!shopLink) return;
+  const products = content.shop?.products || [];
+  const hasStock = products.some((product) => Number(product.stock || 0) > 0);
+  shopLink.classList.toggle("shop-open", hasStock);
+  shopLink.classList.toggle("shop-closed", !hasStock);
+}
+
 function renderProducts() {
   shopGrid.innerHTML = "";
   const products = (shop.products || []).filter((product) => Number(product.stock || 0) > 0);
   hasAvailableProducts = products.length > 0;
   cartPanel.hidden = !hasAvailableProducts;
+  setShopStatus();
   if (!hasAvailableProducts) {
     paymentMode.innerHTML = "";
     upiBox.hidden = true;
@@ -44,76 +54,12 @@ function renderProducts() {
   });
 }
 
-function productImages(product) {
-  const images = Array.isArray(product.images) ? product.images : [product.image];
-  const clean = images.filter(Boolean).slice(0, 4);
-  return clean.length ? clean : ["assets/logo.webp"];
-}
-
-function currentProductImage(productId) {
-  const product = shop.products.find((item) => item.id === productId);
-  const image = document.querySelector(`[data-product-image="${productId}"]`);
-  const images = product ? productImages(product) : [];
-  const index = Math.min(Number(image?.dataset.imageIndex || 0), Math.max(images.length - 1, 0));
-  return { product, src: images[index] || product?.image || "" };
-}
-
-function moveProductImage(productId, direction) {
-  const product = shop.products.find((item) => item.id === productId);
-  if (!product) return;
-  const images = productImages(product);
-  const image = document.querySelector(`[data-product-image="${productId}"]`);
-  const count = document.querySelector(`[data-image-count="${productId}"]`);
-  if (!image || images.length < 2) return;
-  const current = Number(image.dataset.imageIndex || 0);
-  const next = (current + direction + images.length) % images.length;
-  image.dataset.imageIndex = String(next);
-  image.style.display = "block";
-  image.src = images[next];
-  if (count) count.textContent = `${next + 1}/${images.length}`;
-}
-
-function openProductViewer(productId) {
-  const { product, src } = currentProductImage(productId);
-  if (!product || !src) return;
-  const viewer = document.createElement("div");
-  viewer.className = "image-viewer";
-  viewer.innerHTML = `<button class="image-viewer-close" type="button" aria-label="Close full photo">Close</button><figure><div class="viewer-image-wrap"><img src="${src}" alt="${escapeHtml(product.name)}" /><span class="viewer-watermark">Kreative.Adda</span></div><figcaption><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.about || "")}</span></figcaption></figure>`;
-  document.body.append(viewer);
-  document.body.classList.add("viewer-open");
-  const close = () => { viewer.remove(); document.body.classList.remove("viewer-open"); };
-  viewer.querySelector(".image-viewer-close").addEventListener("click", close);
-  viewer.addEventListener("click", (event) => { if (event.target === viewer) close(); });
-  window.addEventListener("keydown", function escapeClose(event) { if (event.key === "Escape") { close(); window.removeEventListener("keydown", escapeClose); } });
-}
-
-function addToCart(productId) {
-  const product = shop.products.find((item) => item.id === productId);
-  if (!product || Number(product.stock || 0) <= 0) return;
-  const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`);
-  const customInput = document.querySelector(`[data-custom-for="${productId}"]`);
-  const stock = Number(product.stock || 0);
-  const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5);
-  cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" });
-  renderCart();
-}
-
-function renderCart() {
-  if (!hasAvailableProducts) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; }
-  cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>";
-  cart.forEach((item, index) => {
-    const lineTotal = Number(item.price || 0) * Number(item.quantity || 1);
-    const row = document.createElement("div");
-    row.className = "cart-row";
-    row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`;
-    cartItems.append(row);
-  });
-  const total = getCartTotal();
-  cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`;
-  if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`;
-  renderPaymentOptions();
-}
-
+function productImages(product) { const images = Array.isArray(product.images) ? product.images : [product.image]; const clean = images.filter(Boolean).slice(0, 4); return clean.length ? clean : ["assets/logo.webp"]; }
+function currentProductImage(productId) { const product = shop.products.find((item) => item.id === productId); const image = document.querySelector(`[data-product-image="${productId}"]`); const images = product ? productImages(product) : []; const index = Math.min(Number(image?.dataset.imageIndex || 0), Math.max(images.length - 1, 0)); return { product, src: images[index] || product?.image || "" }; }
+function moveProductImage(productId, direction) { const product = shop.products.find((item) => item.id === productId); if (!product) return; const images = productImages(product); const image = document.querySelector(`[data-product-image="${productId}"]`); const count = document.querySelector(`[data-image-count="${productId}"]`); if (!image || images.length < 2) return; const current = Number(image.dataset.imageIndex || 0); const next = (current + direction + images.length) % images.length; image.dataset.imageIndex = String(next); image.style.display = "block"; image.src = images[next]; if (count) count.textContent = `${next + 1}/${images.length}`; }
+function openProductViewer(productId) { const { product, src } = currentProductImage(productId); if (!product || !src) return; const viewer = document.createElement("div"); viewer.className = "image-viewer"; viewer.innerHTML = `<button class="image-viewer-close" type="button" aria-label="Close full photo">Close</button><figure><div class="viewer-image-wrap"><img src="${src}" alt="${escapeHtml(product.name)}" /><span class="viewer-watermark">Kreative.Adda</span></div><figcaption><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.about || "")}</span></figcaption></figure>`; document.body.append(viewer); document.body.classList.add("viewer-open"); const close = () => { viewer.remove(); document.body.classList.remove("viewer-open"); }; viewer.querySelector(".image-viewer-close").addEventListener("click", close); viewer.addEventListener("click", (event) => { if (event.target === viewer) close(); }); window.addEventListener("keydown", function escapeClose(event) { if (event.key === "Escape") { close(); window.removeEventListener("keydown", escapeClose); } }); }
+function addToCart(productId) { const product = shop.products.find((item) => item.id === productId); if (!product || Number(product.stock || 0) <= 0) return; const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`); const customInput = document.querySelector(`[data-custom-for="${productId}"]`); const stock = Number(product.stock || 0); const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5); cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" }); renderCart(); }
+function renderCart() { if (!hasAvailableProducts) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>"; cart.forEach((item, index) => { const lineTotal = Number(item.price || 0) * Number(item.quantity || 1); const row = document.createElement("div"); row.className = "cart-row"; row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`; cartItems.append(row); }); const total = getCartTotal(); cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`; if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`; renderPaymentOptions(); }
 function getCartTotal() { return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0); }
 function renderPaymentOptions() { if (!hasAvailableProducts || !cart.length) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } const selected = paymentMode.value; const codAllowed = cart.every((item) => yes(item.codAvailable)); paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>"; if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected; updatePaymentUi(); }
 function updatePaymentUi() { const isUpi = paymentMode.value === "UPI"; upiBox.hidden = !isUpi; upiPaid.required = isUpi; upiReference.required = isUpi; }
@@ -130,18 +76,7 @@ function isValidUpiReference(value) { const clean = String(value || "").trim(); 
 function yes(value) { return String(value || "").trim().toLowerCase() === "yes"; }
 function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
 
-shopGrid.addEventListener("click", (event) => {
-  const addId = event.target.dataset.add;
-  const buyId = event.target.dataset.buy;
-  const prevId = event.target.dataset.imagePrev;
-  const nextId = event.target.dataset.imageNext;
-  const viewId = event.target.closest("[data-view-product]")?.dataset.viewProduct;
-  if (prevId) moveProductImage(prevId, -1);
-  else if (nextId) moveProductImage(nextId, 1);
-  else if (addId) addToCart(addId);
-  else if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); }
-  else if (viewId) openProductViewer(viewId);
-});
+shopGrid.addEventListener("click", (event) => { const addId = event.target.dataset.add; const buyId = event.target.dataset.buy; const prevId = event.target.dataset.imagePrev; const nextId = event.target.dataset.imageNext; const viewId = event.target.closest("[data-view-product]")?.dataset.viewProduct; if (prevId) moveProductImage(prevId, -1); else if (nextId) moveProductImage(nextId, 1); else if (addId) addToCart(addId); else if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); } else if (viewId) openProductViewer(viewId); });
 cartItems.addEventListener("click", (event) => { if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); } });
 document.querySelector("#clearCart").addEventListener("click", () => { cart.splice(0, cart.length); renderCart(); });
 paymentMode.addEventListener("change", updatePaymentUi);
@@ -149,6 +84,7 @@ checkoutForm.addEventListener("submit", placeOrder);
 reviewForm.addEventListener("submit", saveReview);
 
 setupKreativeMusic(content);
+setShopStatus();
 renderProducts();
 renderCart();
 renderTracking();

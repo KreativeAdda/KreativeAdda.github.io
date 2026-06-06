@@ -15,7 +15,7 @@
       youtube: "#",
       instagram: "#",
       email: "",
-      ownerPhoto: "assets/owner-photo.png"
+      ownerPhoto: "assets/owner-photo.jpg"
     },
     music: {
       src: "assets/background-music.mp3",

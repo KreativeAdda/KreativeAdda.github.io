@@ -29,6 +29,7 @@ function renderProducts() {
     shopGrid.innerHTML = "<p class='no-products'>No product is available.</p>";
     return;
   }
+
   products.forEach((product) => {
     const stock = Math.max(0, Number(product.stock || 0));
     const maxQty = Math.min(stock, 5);
@@ -38,15 +39,81 @@ function renderProducts() {
     const card = document.createElement("article");
     card.className = "shop-card";
     const custom = yes(product.customizeAvailable) ? `<label>Customization input<textarea data-custom-for="${product.id}" placeholder="Write your customization request"></textarea></label>` : "";
-    card.innerHTML = `<div class="shop-media"><img data-product-image="${product.id}" data-image-index="0" src="${images[0]}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span>${hasMultipleImages ? `<button class="image-nav image-prev" type="button" data-image-prev="${product.id}" aria-label="Previous product image">‹</button><button class="image-nav image-next" type="button" data-image-next="${product.id}" aria-label="Next product image">›</button><small class="image-count" data-image-count="${product.id}">1/${images.length}</small>` : ""}</div><div class="shop-copy"><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Stock</dt><dd>${stock}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl><label>Quantity<select data-qty-for="${product.id}">${qtyOptions}</select></label>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
+    card.innerHTML = `<div class="shop-media"><img data-product-image="${product.id}" data-image-index="0" data-view-product="${product.id}" src="${images[0]}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span>${hasMultipleImages ? `<button class="image-nav image-prev" type="button" data-image-prev="${product.id}" aria-label="Previous product image">‹</button><button class="image-nav image-next" type="button" data-image-next="${product.id}" aria-label="Next product image">›</button><small class="image-count" data-image-count="${product.id}">1/${images.length}</small>` : ""}</div><div class="shop-copy"><button class="title-view-button" type="button" data-view-product="${product.id}">${escapeHtml(product.name)}</button><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Stock</dt><dd>${stock}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl><label>Quantity<select data-qty-for="${product.id}">${qtyOptions}</select></label>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
     shopGrid.append(card);
   });
 }
 
-function productImages(product) { const images = Array.isArray(product.images) ? product.images : [product.image]; const clean = images.filter(Boolean).slice(0, 4); return clean.length ? clean : ["assets/logo.webp"]; }
-function moveProductImage(productId, direction) { const product = shop.products.find((item) => item.id === productId); if (!product) return; const images = productImages(product); const image = document.querySelector(`[data-product-image="${productId}"]`); const count = document.querySelector(`[data-image-count="${productId}"]`); if (!image || images.length < 2) return; const current = Number(image.dataset.imageIndex || 0); const next = (current + direction + images.length) % images.length; image.dataset.imageIndex = String(next); image.style.display = "block"; image.src = images[next]; if (count) count.textContent = `${next + 1}/${images.length}`; }
-function addToCart(productId) { const product = shop.products.find((item) => item.id === productId); if (!product || Number(product.stock || 0) <= 0) return; const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`); const customInput = document.querySelector(`[data-custom-for="${productId}"]`); const stock = Number(product.stock || 0); const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5); cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" }); renderCart(); }
-function renderCart() { if (!hasAvailableProducts) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>"; cart.forEach((item, index) => { const lineTotal = Number(item.price || 0) * Number(item.quantity || 1); const row = document.createElement("div"); row.className = "cart-row"; row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`; cartItems.append(row); }); const total = getCartTotal(); cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`; if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`; renderPaymentOptions(); }
+function productImages(product) {
+  const images = Array.isArray(product.images) ? product.images : [product.image];
+  const clean = images.filter(Boolean).slice(0, 4);
+  return clean.length ? clean : ["assets/logo.webp"];
+}
+
+function currentProductImage(productId) {
+  const product = shop.products.find((item) => item.id === productId);
+  const image = document.querySelector(`[data-product-image="${productId}"]`);
+  const images = product ? productImages(product) : [];
+  const index = Math.min(Number(image?.dataset.imageIndex || 0), Math.max(images.length - 1, 0));
+  return { product, src: images[index] || product?.image || "" };
+}
+
+function moveProductImage(productId, direction) {
+  const product = shop.products.find((item) => item.id === productId);
+  if (!product) return;
+  const images = productImages(product);
+  const image = document.querySelector(`[data-product-image="${productId}"]`);
+  const count = document.querySelector(`[data-image-count="${productId}"]`);
+  if (!image || images.length < 2) return;
+  const current = Number(image.dataset.imageIndex || 0);
+  const next = (current + direction + images.length) % images.length;
+  image.dataset.imageIndex = String(next);
+  image.style.display = "block";
+  image.src = images[next];
+  if (count) count.textContent = `${next + 1}/${images.length}`;
+}
+
+function openProductViewer(productId) {
+  const { product, src } = currentProductImage(productId);
+  if (!product || !src) return;
+  const viewer = document.createElement("div");
+  viewer.className = "image-viewer";
+  viewer.innerHTML = `<button class="image-viewer-close" type="button" aria-label="Close full photo">Close</button><figure><div style="position:relative;display:flex;justify-content:center;max-height:78vh;"><img src="${src}" alt="${escapeHtml(product.name)}" /><span style="position:absolute;right:4%;bottom:5%;padding:.35rem .7rem;border:1px solid rgba(255,255,255,.28);border-radius:999px;color:rgba(255,255,255,.46);background:rgba(0,0,0,.18);font-weight:900;letter-spacing:0;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.7);">Kreative.Adda</span></div><figcaption><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.about || "")}</span></figcaption></figure>`;
+  document.body.append(viewer);
+  document.body.classList.add("viewer-open");
+  const close = () => { viewer.remove(); document.body.classList.remove("viewer-open"); };
+  viewer.querySelector(".image-viewer-close").addEventListener("click", close);
+  viewer.addEventListener("click", (event) => { if (event.target === viewer) close(); });
+  window.addEventListener("keydown", function escapeClose(event) { if (event.key === "Escape") { close(); window.removeEventListener("keydown", escapeClose); } });
+}
+
+function addToCart(productId) {
+  const product = shop.products.find((item) => item.id === productId);
+  if (!product || Number(product.stock || 0) <= 0) return;
+  const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`);
+  const customInput = document.querySelector(`[data-custom-for="${productId}"]`);
+  const stock = Number(product.stock || 0);
+  const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5);
+  cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" });
+  renderCart();
+}
+
+function renderCart() {
+  if (!hasAvailableProducts) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; }
+  cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>";
+  cart.forEach((item, index) => {
+    const lineTotal = Number(item.price || 0) * Number(item.quantity || 1);
+    const row = document.createElement("div");
+    row.className = "cart-row";
+    row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`;
+    cartItems.append(row);
+  });
+  const total = getCartTotal();
+  cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`;
+  if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`;
+  renderPaymentOptions();
+}
+
 function getCartTotal() { return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0); }
 function renderPaymentOptions() { if (!hasAvailableProducts || !cart.length) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } const selected = paymentMode.value; const codAllowed = cart.every((item) => yes(item.codAvailable)); paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>"; if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected; updatePaymentUi(); }
 function updatePaymentUi() { const isUpi = paymentMode.value === "UPI"; upiBox.hidden = !isUpi; upiPaid.required = isUpi; upiReference.required = isUpi; }
@@ -63,7 +130,18 @@ function isValidUpiReference(value) { const clean = String(value || "").trim(); 
 function yes(value) { return String(value || "").trim().toLowerCase() === "yes"; }
 function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
 
-shopGrid.addEventListener("click", (event) => { const addId = event.target.dataset.add; const buyId = event.target.dataset.buy; const prevId = event.target.dataset.imagePrev; const nextId = event.target.dataset.imageNext; if (prevId) moveProductImage(prevId, -1); if (nextId) moveProductImage(nextId, 1); if (addId) addToCart(addId); if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); } });
+shopGrid.addEventListener("click", (event) => {
+  const addId = event.target.dataset.add;
+  const buyId = event.target.dataset.buy;
+  const prevId = event.target.dataset.imagePrev;
+  const nextId = event.target.dataset.imageNext;
+  const viewId = event.target.closest("[data-view-product]")?.dataset.viewProduct;
+  if (prevId) moveProductImage(prevId, -1);
+  else if (nextId) moveProductImage(nextId, 1);
+  else if (addId) addToCart(addId);
+  else if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); }
+  else if (viewId) openProductViewer(viewId);
+});
 cartItems.addEventListener("click", (event) => { if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); } });
 document.querySelector("#clearCart").addEventListener("click", () => { cart.splice(0, cart.length); renderCart(); });
 paymentMode.addEventListener("change", updatePaymentUi);

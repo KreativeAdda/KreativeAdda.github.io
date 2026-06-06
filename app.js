@@ -12,18 +12,26 @@ function renderHome() {
   document.querySelector("#dailyThought").textContent = content.daily.thought;
   document.querySelector("#aboutTitle").textContent = content.profile.owner || "Avi Narang";
   document.querySelector("#aboutText").textContent = content.profile.about || "";
-
   const ownerPhoto = document.querySelector("#ownerPhoto");
   ownerPhoto.src = content.profile.ownerPhoto || "assets/logo.webp";
   ownerPhoto.onerror = () => { ownerPhoto.src = "assets/logo.webp"; };
-
   setLink("#youtubeLink", content.profile.youtube);
   setLink("#instagramLink", content.profile.instagram);
   const emailLink = document.querySelector("#contactEmail");
-  if (content.profile.email) {
-    emailLink.href = `mailto:${content.profile.email}`;
-    emailLink.textContent = content.profile.email;
-  }
+  if (content.profile.email) { emailLink.href = `mailto:${content.profile.email}`; emailLink.textContent = content.profile.email; }
+}
+
+function setupMusic() {
+  const audio = document.querySelector("#siteMusic");
+  const toggle = document.querySelector("#musicToggle");
+  if (!content.music?.enabled || !content.music?.src) { toggle.hidden = true; return; }
+  audio.src = content.music.src;
+  audio.volume = 0.45;
+  const setPlaying = (isPlaying) => { toggle.textContent = isPlaying ? "Pause music" : "Play music"; toggle.classList.toggle("playing", isPlaying); };
+  const tryPlay = () => audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  toggle.addEventListener("click", () => { if (audio.paused) tryPlay(); else { audio.pause(); setPlaying(false); } });
+  window.addEventListener("pointerdown", function unlockMusic() { if (audio.paused) tryPlay(); window.removeEventListener("pointerdown", unlockMusic); }, { once: true });
+  tryPlay();
 }
 
 function renderCategories() {
@@ -34,13 +42,7 @@ function renderCategories() {
     button.className = "category-tile";
     button.style.setProperty("--accent", category.accent);
     button.innerHTML = `<span>${escapeHtml(category.label)}</span>`;
-    button.addEventListener("click", () => {
-      if (category.isContact) {
-        document.querySelector("#contact").scrollIntoView({ behavior: "smooth" });
-        return;
-      }
-      openCategory(category.id);
-    });
+    button.addEventListener("click", () => openCategory(category.id));
     categoryGrid.append(button);
   });
 }
@@ -53,18 +55,11 @@ function openCategory(categoryId) {
   activeCategoryTitle.textContent = category.label;
   galleryGrid.innerHTML = "";
   emptyState.classList.toggle("visible", items.length === 0);
-
   items.forEach((item) => {
     const card = document.createElement("article");
     card.className = "gallery-card";
     card.style.setProperty("--accent", category.accent);
-    card.innerHTML = `
-      <div class="media-frame">${mediaMarkup(item)}</div>
-      <div class="card-copy">
-        <p>${escapeHtml(category.label)}</p>
-        <h3>${escapeHtml(item.title)}</h3>
-        <span>${escapeHtml(item.caption || "A Kreative.Adda memory.")}</span>
-      </div>`;
+    card.innerHTML = `<div class="media-frame">${mediaMarkup(item)}</div><div class="card-copy"><p>${escapeHtml(category.label)}</p><h3>${escapeHtml(item.title)}</h3><span>${escapeHtml(item.caption || "A Kreative.Adda memory.")}</span></div>`;
     galleryGrid.append(card);
   });
   galleryPanel.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -79,30 +74,12 @@ function mediaMarkup(item) {
   return placeholderMarkup(item);
 }
 
-function youtubeEmbedUrl(url) {
-  try {
-    const parsed = new URL(url);
-    let id = "";
-    if (parsed.hostname.includes("youtu.be")) id = parsed.pathname.slice(1);
-    if (parsed.hostname.includes("youtube.com")) id = parsed.searchParams.get("v") || parsed.pathname.split("/").pop();
-    return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}` : "";
-  } catch { return ""; }
-}
-
-function placeholderMarkup(item) {
-  return `<div class="placeholder-art"><span>${escapeHtml(item.title.slice(0, 1))}</span></div>`;
-}
-
-function setLink(selector, href) {
-  const link = document.querySelector(selector);
-  link.href = href && href !== "#" ? href : "#";
-  link.classList.toggle("disabled", !href || href === "#");
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
-}
+function youtubeEmbedUrl(url) { try { const parsed = new URL(url); let id = ""; if (parsed.hostname.includes("youtu.be")) id = parsed.pathname.slice(1); if (parsed.hostname.includes("youtube.com")) id = parsed.searchParams.get("v") || parsed.pathname.split("/").pop(); return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}` : ""; } catch { return ""; } }
+function placeholderMarkup(item) { return `<div class="placeholder-art"><span>${escapeHtml(item.title.slice(0, 1))}</span></div>`; }
+function setLink(selector, href) { const link = document.querySelector(selector); link.href = href && href !== "#" ? href : "#"; link.classList.toggle("disabled", !href || href === "#"); }
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
 
 document.querySelector("#closeGallery").addEventListener("click", () => { galleryPanel.hidden = true; });
 renderHome();
 renderCategories();
+setupMusic();

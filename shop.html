@@ -32,8 +32,8 @@
             <label>Email<input name="email" type="email" required /></label>
             <label>Address<textarea name="address" required></textarea></label>
             <label>Payment mode<select name="payment" id="paymentMode" required></select></label>
-            <div class="upi-box" id="upiBox" hidden><p>Scan UPI QR to pay</p><img src="assets/upi-qr.png" alt="UPI QR code" /></div>
-            <button type="submit">Place order</button>
+            <div class="upi-box" id="upiBox" hidden><p>Scan UPI QR and pay the total amount</p><strong id="upiAmount">₹0</strong><img src="assets/upi-qr.png" alt="UPI QR code" /><label class="check-line"><input type="checkbox" id="upiPaid" /> I have completed the UPI payment</label><label>UPI transaction/reference ID<input id="upiReference" name="upiReference" placeholder="Enter UPI reference ID" /></label></div>
+            <button type="submit" id="placeOrderButton">Place order</button>
           </form>
           <div class="order-confirmation" id="orderConfirmation" hidden></div>
         </aside>

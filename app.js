@@ -33,19 +33,6 @@ function setShopStatus() {
   shopLink.classList.toggle("shop-closed", !hasStock);
 }
 
-function setupMusic() {
-  const audio = document.querySelector("#siteMusic");
-  const toggle = document.querySelector("#musicToggle");
-  if (!content.music?.enabled || !content.music?.src) { toggle.hidden = true; return; }
-  audio.src = content.music.src;
-  audio.volume = 0.45;
-  const setPlaying = (isPlaying) => { toggle.textContent = isPlaying ? "Pause music" : "Play music"; toggle.classList.toggle("playing", isPlaying); };
-  const tryPlay = () => audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-  toggle.addEventListener("click", () => { if (audio.paused) tryPlay(); else { audio.pause(); setPlaying(false); } });
-  window.addEventListener("pointerdown", function unlockMusic() { if (audio.paused) tryPlay(); window.removeEventListener("pointerdown", unlockMusic); }, { once: true });
-  tryPlay();
-}
-
 function renderCategories() {
   categoryGrid.innerHTML = "";
   categories.forEach((category) => {
@@ -54,7 +41,7 @@ function renderCategories() {
     button.className = "category-tile";
     button.style.setProperty("--accent", category.accent);
     button.innerHTML = `<span>${escapeHtml(category.label)}</span>`;
-    button.addEventListener("click", () => { window.open(`category.html?type=${encodeURIComponent(category.id)}`, "_blank"); });
+    button.addEventListener("click", () => { window.location.href = `category.html?type=${encodeURIComponent(category.id)}`; });
     categoryGrid.append(button);
   });
 }
@@ -64,4 +51,4 @@ function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => 
 
 renderHome();
 renderCategories();
-setupMusic();
+setupKreativeMusic(content);

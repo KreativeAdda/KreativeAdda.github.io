@@ -16,6 +16,19 @@ const trackingSteps = document.querySelector("#trackingSteps");
 const reviewForm = document.querySelector("#reviewForm");
 const reviewList = document.querySelector("#reviewList");
 
+function setupMusic() {
+  const audio = document.querySelector("#siteMusic");
+  const toggle = document.querySelector("#musicToggle");
+  if (!audio || !toggle || !content.music?.enabled || !content.music?.src) { if (toggle) toggle.hidden = true; return; }
+  audio.src = content.music.src;
+  audio.volume = 0.45;
+  const setPlaying = (isPlaying) => { toggle.textContent = isPlaying ? "Pause music" : "Play music"; toggle.classList.toggle("playing", isPlaying); };
+  const tryPlay = () => audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  toggle.addEventListener("click", () => { if (audio.paused) tryPlay(); else { audio.pause(); setPlaying(false); } });
+  window.addEventListener("pointerdown", function unlockMusic() { if (audio.paused) tryPlay(); window.removeEventListener("pointerdown", unlockMusic); }, { once: true });
+  tryPlay();
+}
+
 function renderProducts() {
   shopGrid.innerHTML = "";
   const products = (shop.products || []).filter((product) => Number(product.stock || 0) > 0);
@@ -119,20 +132,7 @@ function createOrderId() {
 function submitOrderToSheet(order) {
   if (!shop.orderSheetEndpoint) return;
   const payload = new FormData();
-  Object.entries({
-    orderId: order.id,
-    placedAt: order.placedAt,
-    customerName: order.name,
-    phone: order.phone,
-    email: order.email,
-    address: order.address,
-    payment: order.payment,
-    upiReference: order.upiReference,
-    products: order.products.join(" | "),
-    total: order.total,
-    eta: order.eta,
-    stage: order.stage
-  }).forEach(([key, value]) => payload.append(key, value));
+  Object.entries({ orderId: order.id, placedAt: order.placedAt, customerName: order.name, phone: order.phone, email: order.email, address: order.address, payment: order.payment, upiReference: order.upiReference, products: order.products.join(" | "), total: order.total, eta: order.eta, stage: order.stage }).forEach(([key, value]) => payload.append(key, value));
   fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {});
 }
 
@@ -207,6 +207,7 @@ paymentMode.addEventListener("change", updatePaymentUi);
 checkoutForm.addEventListener("submit", placeOrder);
 reviewForm.addEventListener("submit", saveReview);
 
+setupMusic();
 renderProducts();
 renderCart();
 renderTracking();

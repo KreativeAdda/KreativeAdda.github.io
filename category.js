@@ -13,7 +13,6 @@ title.textContent = category.label;
 eyebrow.textContent = "Now viewing";
 document.title = `${category.label} | Kreative.Adda`;
 renderCategory();
-setupKreativeMusic(content);
 
 function renderCategory() {
   const items = content.items.filter((item) => item.category === category.id);

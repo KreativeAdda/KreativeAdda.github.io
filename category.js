@@ -8,6 +8,7 @@ const grid = document.querySelector("#categoryGalleryGrid");
 const emptyState = document.querySelector("#categoryEmptyState");
 
 ensureWatermarkStyles();
+setShopStatus();
 title.textContent = category.label;
 eyebrow.textContent = "Now viewing";
 document.title = `${category.label} | Kreative.Adda`;
@@ -50,6 +51,15 @@ function openImageViewer(item) {
   viewer.querySelector(".image-viewer-close").addEventListener("click", close);
   viewer.addEventListener("click", (event) => { if (event.target === viewer) close(); });
   window.addEventListener("keydown", function escapeClose(event) { if (event.key === "Escape") { close(); window.removeEventListener("keydown", escapeClose); } });
+}
+
+function setShopStatus() {
+  const shopLink = document.querySelector("#shopNavLink");
+  if (!shopLink) return;
+  const products = content.shop?.products || [];
+  const hasStock = products.some((product) => Number(product.stock || 0) > 0);
+  shopLink.classList.toggle("shop-open", hasStock);
+  shopLink.classList.toggle("shop-closed", !hasStock);
 }
 
 function ensureWatermarkStyles() {

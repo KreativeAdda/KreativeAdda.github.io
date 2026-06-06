@@ -30,6 +30,7 @@
       ownerPhone: "+91-9457171931",
       whatsappNumber: "919457171931",
       upiQr: "assets/upi-qr.png",
+      orderSheetEndpoint: "",
       products: [
         {
           id: "sample-product",

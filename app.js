@@ -35,10 +35,11 @@ function setShopStatus() {
 
 function renderCategories() {
   categoryGrid.innerHTML = "";
+  const uploadedCategories = new Set((content.items || []).map((item) => item.category));
   categories.forEach((category) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "category-tile";
+    button.className = uploadedCategories.has(category.id) ? "category-tile category-has-content" : "category-tile";
     button.style.setProperty("--accent", category.accent);
     button.innerHTML = `<span>${escapeHtml(category.label)}</span>`;
     button.addEventListener("click", () => { window.location.href = `category.html?type=${encodeURIComponent(category.id)}`; });

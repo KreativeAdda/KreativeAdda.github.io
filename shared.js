@@ -46,7 +46,15 @@
         }
       ]
     },
-    items: []
+    items: [
+      {
+      category: "Photography",
+      type: "image",
+      title: "Golden Horizon",
+      src: "assets/photo1.jpg",
+      caption: "Framed by nature, serenaded by the sunset."
+      }
+    ]
   };
 
   function categoryById(id) {

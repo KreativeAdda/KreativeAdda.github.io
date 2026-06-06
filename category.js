@@ -11,7 +11,7 @@ title.textContent = category.label;
 eyebrow.textContent = "Now viewing";
 document.title = `${category.label} | Kreative.Adda`;
 renderCategory();
-setupMusic();
+setupKreativeMusic(content);
 
 function renderCategory() {
   const items = content.items.filter((item) => item.category === category.id);
@@ -24,19 +24,6 @@ function renderCategory() {
     card.innerHTML = `<div class="media-frame">${mediaMarkup(item)}</div><div class="card-copy"><p>${escapeHtml(category.label)}</p><h3>${escapeHtml(item.title)}</h3><span>${escapeHtml(item.caption || "A Kreative.Adda memory.")}</span></div>`;
     grid.append(card);
   });
-}
-
-function setupMusic() {
-  const audio = document.querySelector("#siteMusic");
-  const toggle = document.querySelector("#musicToggle");
-  if (!content.music?.enabled || !content.music?.src) { toggle.hidden = true; return; }
-  audio.src = content.music.src;
-  audio.volume = 0.45;
-  const setPlaying = (isPlaying) => { toggle.textContent = isPlaying ? "Pause music" : "Play music"; toggle.classList.toggle("playing", isPlaying); };
-  const tryPlay = () => audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-  toggle.addEventListener("click", () => { if (audio.paused) tryPlay(); else { audio.pause(); setPlaying(false); } });
-  window.addEventListener("pointerdown", function unlockMusic() { if (audio.paused) tryPlay(); window.removeEventListener("pointerdown", unlockMusic); }, { once: true });
-  tryPlay();
 }
 
 function mediaMarkup(item) {

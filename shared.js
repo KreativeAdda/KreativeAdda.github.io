@@ -38,6 +38,7 @@
           image: "assets/product-1.jpg",
           about: "Replace this with your product details in shared.js.",
           price: 499,
+          stock: 2,
           customizeAvailable: "Yes",
           codAvailable: "Yes",
           eta: "5-7 days"

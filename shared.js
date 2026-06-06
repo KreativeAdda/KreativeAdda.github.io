@@ -19,9 +19,9 @@
       ownerPhoto: "assets/owner-photo.jpg"
     },
     daily: {
-      word: "Kreative",
-      meaning: "To shape everyday moments into memories, music and art.",
-      thought: "Every day has one small spark worth saving."
+      word: "Serenaded",
+      meaning: "Surrounded by nature and gently enchanted by the beauty of the sunset.",
+      thought: "Saturday is for slowing down, soaking in the moment, and finding joy in the simple things."
     },
     items: [
       { id: "sample-dishes", title: "Dishes", category: "dishes", type: "note", caption: "Upload dish photos to the GitHub repository and list them in shared.js." },

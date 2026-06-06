@@ -3,6 +3,7 @@ const shop = content.shop || { products: [] };
 const cart = [];
 const stages = ["Order Placed", "Order Packed", "Order Shipped", "Out for Delivery", "Delivered"];
 const shopGrid = document.querySelector("#shopGrid");
+const cartPanel = document.querySelector(".cart-panel");
 const cartItems = document.querySelector("#cartItems");
 const cartTotal = document.querySelector("#cartTotal");
 const paymentMode = document.querySelector("#paymentMode");
@@ -15,11 +16,19 @@ const orderConfirmation = document.querySelector("#orderConfirmation");
 const trackingSteps = document.querySelector("#trackingSteps");
 const reviewForm = document.querySelector("#reviewForm");
 const reviewList = document.querySelector("#reviewList");
+let hasAvailableProducts = false;
 
 function renderProducts() {
   shopGrid.innerHTML = "";
   const products = (shop.products || []).filter((product) => Number(product.stock || 0) > 0);
-  if (!products.length) { shopGrid.innerHTML = "<p class='no-products'>No product is available.</p>"; return; }
+  hasAvailableProducts = products.length > 0;
+  cartPanel.hidden = !hasAvailableProducts;
+  if (!hasAvailableProducts) {
+    paymentMode.innerHTML = "";
+    upiBox.hidden = true;
+    shopGrid.innerHTML = "<p class='no-products'>No product is available.</p>";
+    return;
+  }
   products.forEach((product) => {
     const stock = Math.max(0, Number(product.stock || 0));
     const maxQty = Math.min(stock, 5);
@@ -37,9 +46,9 @@ function renderProducts() {
 function productImages(product) { const images = Array.isArray(product.images) ? product.images : [product.image]; const clean = images.filter(Boolean).slice(0, 4); return clean.length ? clean : ["assets/logo.webp"]; }
 function moveProductImage(productId, direction) { const product = shop.products.find((item) => item.id === productId); if (!product) return; const images = productImages(product); const image = document.querySelector(`[data-product-image="${productId}"]`); const count = document.querySelector(`[data-image-count="${productId}"]`); if (!image || images.length < 2) return; const current = Number(image.dataset.imageIndex || 0); const next = (current + direction + images.length) % images.length; image.dataset.imageIndex = String(next); image.style.display = "block"; image.src = images[next]; if (count) count.textContent = `${next + 1}/${images.length}`; }
 function addToCart(productId) { const product = shop.products.find((item) => item.id === productId); if (!product || Number(product.stock || 0) <= 0) return; const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`); const customInput = document.querySelector(`[data-custom-for="${productId}"]`); const stock = Number(product.stock || 0); const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5); cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" }); renderCart(); }
-function renderCart() { cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>"; cart.forEach((item, index) => { const lineTotal = Number(item.price || 0) * Number(item.quantity || 1); const row = document.createElement("div"); row.className = "cart-row"; row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`; cartItems.append(row); }); const total = getCartTotal(); cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`; if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`; renderPaymentOptions(); }
+function renderCart() { if (!hasAvailableProducts) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>"; cart.forEach((item, index) => { const lineTotal = Number(item.price || 0) * Number(item.quantity || 1); const row = document.createElement("div"); row.className = "cart-row"; row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`; cartItems.append(row); }); const total = getCartTotal(); cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`; if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`; renderPaymentOptions(); }
 function getCartTotal() { return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0); }
-function renderPaymentOptions() { const selected = paymentMode.value; const codAllowed = cart.length > 0 && cart.every((item) => yes(item.codAvailable)); paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>"; if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected; updatePaymentUi(); }
+function renderPaymentOptions() { if (!hasAvailableProducts || !cart.length) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } const selected = paymentMode.value; const codAllowed = cart.every((item) => yes(item.codAvailable)); paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>"; if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected; updatePaymentUi(); }
 function updatePaymentUi() { const isUpi = paymentMode.value === "UPI"; upiBox.hidden = !isUpi; upiPaid.required = isUpi; upiReference.required = isUpi; }
 function placeOrder(event) { event.preventDefault(); if (!cart.length) { alert("Please add at least one product to cart."); return; } if (paymentMode.value === "UPI" && (!upiPaid.checked || !isValidUpiReference(upiReference.value))) { alert("Please complete UPI payment and enter a valid UPI transaction/reference ID. Common UPI UTR is 12 digits."); return; } const data = new FormData(checkoutForm); const order = { id: createOrderId(), placedAt: new Date().toLocaleString("en-IN"), name: data.get("name"), phone: data.get("phone"), email: data.get("email"), address: data.get("address"), payment: data.get("payment"), upiReference: paymentMode.value === "UPI" ? upiReference.value.trim() : "", products: cart.map((item) => `${item.name} x ${item.quantity}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`), total: getCartTotal(), eta: cart.map((item) => item.eta).filter(Boolean).join(" | "), stage: stages[0] }; localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order)); submitOrderToSheet(order); showConfirmation(order); renderTracking(order.stage); openEmailDraft(order); }
 function createOrderId() { const date = new Date(); const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`; const random = Math.random().toString(36).slice(2, 8).toUpperCase(); return `KA-${stamp}-${random}`; }

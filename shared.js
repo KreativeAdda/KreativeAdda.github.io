@@ -62,7 +62,7 @@
         caption: "Delicately crafted with suji and poha, inspired by the bold flavors of Indian-Chinese cuisine."
         },
        {
-        category: "sargam",
+        category: "natak",
         type: "youtube",
         title: "Monologue Act- Terrorist",
         youtube: "https://youtu.be/AjQ0EeaCIk0?si=uVGJQdPPlHyOtmAh",

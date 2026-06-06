@@ -71,6 +71,7 @@ function placeOrder(event) {
   submitOrderToSheet(order);
   showConfirmation(order);
   renderTracking(order.stage);
+  openEmailDraft(order);
 }
 
 function createOrderId() {
@@ -98,10 +99,22 @@ function submitOrderToSheet(order) {
   fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {});
 }
 
+function orderEmailUrl(order) {
+  const to = content.profile?.email || "kreativeadda.avi@gmail.com";
+  const subject = `Kreative.Adda Order ${order.id}`;
+  const body = `New Kreative.Adda order\n\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\n\nPlease send this email to confirm the order.`;
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function openEmailDraft(order) {
+  window.location.href = orderEmailUrl(order);
+}
+
 function showConfirmation(order) {
   const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}`);
+  const emailUrl = orderEmailUrl(order);
   orderConfirmation.hidden = false;
-  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Your order details have been prepared. If online order sheet is connected, Avi will receive it automatically. You can also send the order on WhatsApp.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
+  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Your email app should open with the order details ready. Please press Send to confirm the order.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill" href="${emailUrl}" aria-label="Send order email"><span>Send order email</span></a><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
   orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

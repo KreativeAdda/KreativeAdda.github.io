@@ -26,6 +26,23 @@
       meaning: "Surrounded by nature and gently enchanted by the beauty of the sunset.",
       thought: "Saturday is for slowing down, soaking in the moment, and finding joy in the simple things."
     },
+    shop: {
+      ownerPhone: "+91-9457171931",
+      whatsappNumber: "919457171931",
+      upiQr: "assets/upi-qr.png",
+      products: [
+        {
+          id: "sample-product",
+          name: "Sample Product",
+          image: "assets/product-1.jpg",
+          about: "Replace this with your product details in shared.js.",
+          price: 499,
+          customizeAvailable: "Yes",
+          codAvailable: "Yes",
+          eta: "5-7 days"
+        }
+      ]
+    },
     items: [
       { id: "sample-dishes", title: "Khana-Khazana", category: "dishes", type: "note", caption: "Upload dish photos to the GitHub repository and list them in shared.js." },
       { id: "sample-sargam", title: "Sargam", category: "sargam", type: "youtube", youtube: "", caption: "YouTube links can be embedded here so visitors watch from the website." }

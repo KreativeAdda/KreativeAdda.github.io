@@ -12,15 +12,16 @@ function renderHome() {
   document.querySelector("#dailyThought").textContent = content.daily.thought;
   document.querySelector("#aboutTitle").textContent = content.profile.owner || "Avi Narang";
   document.querySelector("#aboutText").textContent = content.profile.about || "";
-  const photoSrc = content.profile.ownerPhoto || "assets/logo.webp";
+  const aboutPhotoSrc = content.profile.ownerPhoto || "assets/logo.webp";
+  const heroPhotoSrc = "assets/owner-photo.png";
   const ownerPhoto = document.querySelector("#ownerPhoto");
   const heroOwnerPhoto = document.querySelector("#heroOwnerPhoto");
   const ownerPhotoLink = document.querySelector("#ownerPhotoLink");
-  [ownerPhoto, heroOwnerPhoto].forEach((photo) => {
-    photo.src = photoSrc;
-    photo.onerror = () => { photo.src = "assets/logo.webp"; };
-  });
-  ownerPhotoLink.href = photoSrc;
+  ownerPhoto.src = aboutPhotoSrc;
+  ownerPhoto.onerror = () => { ownerPhoto.src = "assets/logo.webp"; };
+  heroOwnerPhoto.src = heroPhotoSrc;
+  heroOwnerPhoto.onerror = () => { heroOwnerPhoto.style.display = "none"; };
+  ownerPhotoLink.href = aboutPhotoSrc;
   setLink("#youtubeLink", content.profile.youtube);
   setLink("#instagramLink", content.profile.instagram);
   const emailLink = document.querySelector("#contactEmail");

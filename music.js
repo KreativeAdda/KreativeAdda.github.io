@@ -2,35 +2,63 @@ function setupKreativeMusic(content) {
   const audio = document.querySelector("#siteMusic");
   const toggle = document.querySelector("#musicToggle");
   if (!audio || !toggle || !content.music?.enabled || !content.music?.src) { if (toggle) toggle.hidden = true; return; }
+
   const timeKey = "kreativeAddaMusicTime";
   const playKey = "kreativeAddaMusicPlaying";
+  const shouldResume = localStorage.getItem(playKey) === "true";
+
   audio.src = content.music.src;
   audio.volume = 0.45;
-  audio.addEventListener("loadedmetadata", () => {
-    const savedTime = Number(localStorage.getItem(timeKey) || 0);
-    if (savedTime > 0 && savedTime < audio.duration) audio.currentTime = savedTime;
-  }, { once: true });
-  const saveState = () => {
+
+  const saveTime = () => {
     if (!Number.isNaN(audio.currentTime)) localStorage.setItem(timeKey, String(audio.currentTime));
-    localStorage.setItem(playKey, audio.paused ? "false" : "true");
   };
-  const setPlaying = (isPlaying) => {
-    toggle.textContent = isPlaying ? "Pause music" : "Play music";
+
+  const setButton = (state) => {
+    const isPlaying = state === "playing";
+    toggle.textContent = isPlaying ? "Pause music" : state === "resume" ? "Resume music" : "Play music";
     toggle.classList.toggle("playing", isPlaying);
-    localStorage.setItem(playKey, isPlaying ? "true" : "false");
   };
-  const tryPlay = () => audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+
+  const restoreTime = () => {
+    const savedTime = Number(localStorage.getItem(timeKey) || 0);
+    if (savedTime > 0 && Number.isFinite(audio.duration) && savedTime < audio.duration) {
+      audio.currentTime = savedTime;
+    }
+  };
+
+  const startMusic = () => {
+    localStorage.setItem(playKey, "true");
+    restoreTime();
+    return audio.play().then(() => setButton("playing")).catch(() => setButton("resume"));
+  };
+
+  const pauseMusic = () => {
+    audio.pause();
+    saveTime();
+    localStorage.setItem(playKey, "false");
+    setButton("paused");
+  };
+
+  audio.addEventListener("loadedmetadata", () => {
+    restoreTime();
+    if (shouldResume) startMusic();
+    else setButton("paused");
+  }, { once: true });
+
+  audio.addEventListener("timeupdate", saveTime);
+  window.addEventListener("pagehide", saveTime);
+  window.addEventListener("beforeunload", saveTime);
+
   toggle.addEventListener("click", () => {
-    if (audio.paused) tryPlay();
-    else { audio.pause(); setPlaying(false); saveState(); }
+    if (audio.paused) startMusic();
+    else pauseMusic();
   });
-  audio.addEventListener("timeupdate", saveState);
-  window.addEventListener("pagehide", saveState);
-  window.addEventListener("beforeunload", saveState);
+
   window.addEventListener("pointerdown", function unlockMusic() {
-    if (localStorage.getItem(playKey) !== "false" && audio.paused) tryPlay();
+    if (localStorage.getItem(playKey) === "true" && audio.paused) startMusic();
     window.removeEventListener("pointerdown", unlockMusic);
   }, { once: true });
-  if (localStorage.getItem(playKey) !== "false") tryPlay();
-  else setPlaying(false);
+
+  setButton(shouldResume ? "resume" : "paused");
 }

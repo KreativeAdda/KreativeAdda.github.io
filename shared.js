@@ -36,6 +36,7 @@
           id: "sample-product",
           name: "Sample Product",
           image: "assets/product-1.jpg",
+          images: ["assets/product-1.jpg", "assets/product-2.jpg", "assets/product-3.jpg", "assets/product-4.jpg"],
           about: "Replace this with your product details in shared.js.",
           price: 499,
           stock: 0,

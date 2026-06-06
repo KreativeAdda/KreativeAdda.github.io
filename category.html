@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Category | Kreative.Adda</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <audio id="siteMusic" src="assets/background-music.mp3" loop preload="auto"></audio>
+    <button class="music-toggle" id="musicToggle" type="button" aria-label="Play background music">Music</button>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Kreative.Adda home"><img src="assets/logo.webp" alt="Kreative.Adda logo" /><span>Kreative<span>.Adda</span></span></a>
+      <nav aria-label="Category navigation"><a href="index.html#gallery">Gallery</a><a href="shop.html" target="_blank" rel="noreferrer">Shop</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav>
+    </header>
+    <main class="shop-shell">
+      <section class="shop-hero">
+        <p class="eyebrow" id="categoryEyebrow">Kreative.Adda Gallery</p>
+        <h1 id="categoryTitle">Category</h1>
+      </section>
+      <section class="section">
+        <div class="gallery-grid" id="categoryGalleryGrid"></div>
+        <p class="empty-state visible" id="categoryEmptyState">No public uploads yet for this category.</p>
+      </section>
+    </main>
+    <footer><span>Kreative.Adda by Avi Narang</span><img class="footer-logo" src="assets/footer-logo.png" alt="Avi Narang personal logo" /></footer>
+    <script src="shared.js"></script><script src="category.js"></script>
+  </body>
+</html>

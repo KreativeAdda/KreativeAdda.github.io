@@ -53,7 +53,14 @@
         title: "Golden Horizon",
         src: "assets/photo1.jpg",
         caption: "Framed by nature, serenaded by the sunset."
-      }
+      },
+      {
+      category: "dishes",
+        type: "image",
+        title: "Dragon Pearl Bites",
+        src: "assets/khana1.jpg",
+        caption: "Delicately crafted with suji and poha, inspired by the bold flavors of Indian-Chinese cuisine."
+        }
     ]
   };
 

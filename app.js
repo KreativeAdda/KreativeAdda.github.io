@@ -12,9 +12,15 @@ function renderHome() {
   document.querySelector("#dailyThought").textContent = content.daily.thought;
   document.querySelector("#aboutTitle").textContent = content.profile.owner || "Avi Narang";
   document.querySelector("#aboutText").textContent = content.profile.about || "";
+  const photoSrc = content.profile.ownerPhoto || "assets/logo.webp";
   const ownerPhoto = document.querySelector("#ownerPhoto");
-  ownerPhoto.src = content.profile.ownerPhoto || "assets/logo.webp";
-  ownerPhoto.onerror = () => { ownerPhoto.src = "assets/logo.webp"; };
+  const heroOwnerPhoto = document.querySelector("#heroOwnerPhoto");
+  const ownerPhotoLink = document.querySelector("#ownerPhotoLink");
+  [ownerPhoto, heroOwnerPhoto].forEach((photo) => {
+    photo.src = photoSrc;
+    photo.onerror = () => { photo.src = "assets/logo.webp"; };
+  });
+  ownerPhotoLink.href = photoSrc;
   setLink("#youtubeLink", content.profile.youtube);
   setLink("#instagramLink", content.profile.instagram);
   const emailLink = document.querySelector("#contactEmail");

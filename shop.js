@@ -55,9 +55,9 @@ function placeOrder(event) {
   event.preventDefault();
   if (!cart.length) { alert("Please add at least one product to cart."); return; }
   const data = new FormData(checkoutForm);
-  const orderId = `KA-${Date.now().toString().slice(-6)}`;
   const order = {
-    id: orderId,
+    id: createOrderId(),
+    placedAt: new Date().toLocaleString("en-IN"),
     name: data.get("name"),
     phone: data.get("phone"),
     email: data.get("email"),
@@ -68,14 +68,40 @@ function placeOrder(event) {
     stage: stages[0]
   };
   localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order));
+  submitOrderToSheet(order);
   showConfirmation(order);
   renderTracking(order.stage);
 }
 
+function createOrderId() {
+  const date = new Date();
+  const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
+  const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `KA-${stamp}-${random}`;
+}
+
+function submitOrderToSheet(order) {
+  if (!shop.orderSheetEndpoint) return;
+  const payload = new FormData();
+  Object.entries({
+    orderId: order.id,
+    placedAt: order.placedAt,
+    customerName: order.name,
+    phone: order.phone,
+    email: order.email,
+    address: order.address,
+    payment: order.payment,
+    products: order.products.join(" | "),
+    total: order.total,
+    stage: order.stage
+  }).forEach(([key, value]) => payload.append(key, value));
+  fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {});
+}
+
 function showConfirmation(order) {
-  const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}`);
+  const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}`);
   orderConfirmation.hidden = false;
-  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Your order is recorded on this device. Please send the order details to Avi on WhatsApp so it can be confirmed and managed.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
+  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Your order details have been prepared. If online order sheet is connected, Avi will receive it automatically. You can also send the order on WhatsApp.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
   orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

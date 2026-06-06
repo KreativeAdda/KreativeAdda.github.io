@@ -40,12 +40,34 @@ function renderProducts() {
     const stock = Math.max(0, Number(product.stock || 0));
     const maxQty = Math.min(stock, 5);
     const qtyOptions = Array.from({ length: maxQty }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("");
+    const images = productImages(product);
+    const hasMultipleImages = images.length > 1;
     const card = document.createElement("article");
     card.className = "shop-card";
     const custom = yes(product.customizeAvailable) ? `<label>Customization input<textarea data-custom-for="${product.id}" placeholder="Write your customization request"></textarea></label>` : "";
-    card.innerHTML = `<div class="shop-media"><img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span></div><div class="shop-copy"><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Stock</dt><dd>${stock}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl><label>Quantity<select data-qty-for="${product.id}">${qtyOptions}</select></label>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
+    card.innerHTML = `<div class="shop-media"><img data-product-image="${product.id}" data-image-index="0" src="${images[0]}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span>${hasMultipleImages ? `<button class="image-nav image-prev" type="button" data-image-prev="${product.id}" aria-label="Previous product image">‹</button><button class="image-nav image-next" type="button" data-image-next="${product.id}" aria-label="Next product image">›</button><small class="image-count" data-image-count="${product.id}">1/${images.length}</small>` : ""}</div><div class="shop-copy"><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Stock</dt><dd>${stock}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl><label>Quantity<select data-qty-for="${product.id}">${qtyOptions}</select></label>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
     shopGrid.append(card);
   });
+}
+
+function productImages(product) {
+  const images = Array.isArray(product.images) ? product.images : [product.image];
+  return images.filter(Boolean).slice(0, 4).length ? images.filter(Boolean).slice(0, 4) : ["assets/logo.webp"];
+}
+
+function moveProductImage(productId, direction) {
+  const product = shop.products.find((item) => item.id === productId);
+  if (!product) return;
+  const images = productImages(product);
+  const image = document.querySelector(`[data-product-image="${productId}"]`);
+  const count = document.querySelector(`[data-image-count="${productId}"]`);
+  if (!image || images.length < 2) return;
+  const current = Number(image.dataset.imageIndex || 0);
+  const next = (current + direction + images.length) % images.length;
+  image.dataset.imageIndex = String(next);
+  image.style.display = "block";
+  image.src = images[next];
+  if (count) count.textContent = `${next + 1}/${images.length}`;
 }
 
 function addToCart(productId) {
@@ -74,47 +96,16 @@ function renderCart() {
   renderPaymentOptions();
 }
 
-function getCartTotal() {
-  return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
-}
-
-function renderPaymentOptions() {
-  const selected = paymentMode.value;
-  const codAllowed = cart.length > 0 && cart.every((item) => yes(item.codAvailable));
-  paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>";
-  if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected;
-  updatePaymentUi();
-}
-
-function updatePaymentUi() {
-  const isUpi = paymentMode.value === "UPI";
-  upiBox.hidden = !isUpi;
-  upiPaid.required = isUpi;
-  upiReference.required = isUpi;
-}
+function getCartTotal() { return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0); }
+function renderPaymentOptions() { const selected = paymentMode.value; const codAllowed = cart.length > 0 && cart.every((item) => yes(item.codAvailable)); paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>"; if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected; updatePaymentUi(); }
+function updatePaymentUi() { const isUpi = paymentMode.value === "UPI"; upiBox.hidden = !isUpi; upiPaid.required = isUpi; upiReference.required = isUpi; }
 
 function placeOrder(event) {
   event.preventDefault();
   if (!cart.length) { alert("Please add at least one product to cart."); return; }
-  if (paymentMode.value === "UPI" && (!upiPaid.checked || !isValidUpiReference(upiReference.value))) {
-    alert("Please complete UPI payment and enter a valid UPI transaction/reference ID. Common UPI UTR is 12 digits.");
-    return;
-  }
+  if (paymentMode.value === "UPI" && (!upiPaid.checked || !isValidUpiReference(upiReference.value))) { alert("Please complete UPI payment and enter a valid UPI transaction/reference ID. Common UPI UTR is 12 digits."); return; }
   const data = new FormData(checkoutForm);
-  const order = {
-    id: createOrderId(),
-    placedAt: new Date().toLocaleString("en-IN"),
-    name: data.get("name"),
-    phone: data.get("phone"),
-    email: data.get("email"),
-    address: data.get("address"),
-    payment: data.get("payment"),
-    upiReference: paymentMode.value === "UPI" ? upiReference.value.trim() : "",
-    products: cart.map((item) => `${item.name} x ${item.quantity}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`),
-    total: getCartTotal(),
-    eta: cart.map((item) => item.eta).filter(Boolean).join(" | "),
-    stage: stages[0]
-  };
+  const order = { id: createOrderId(), placedAt: new Date().toLocaleString("en-IN"), name: data.get("name"), phone: data.get("phone"), email: data.get("email"), address: data.get("address"), payment: data.get("payment"), upiReference: paymentMode.value === "UPI" ? upiReference.value.trim() : "", products: cart.map((item) => `${item.name} x ${item.quantity}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`), total: getCartTotal(), eta: cart.map((item) => item.eta).filter(Boolean).join(" | "), stage: stages[0] };
   localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order));
   submitOrderToSheet(order);
   showConfirmation(order);
@@ -122,86 +113,29 @@ function placeOrder(event) {
   openEmailDraft(order);
 }
 
-function createOrderId() {
-  const date = new Date();
-  const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
-  const random = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `KA-${stamp}-${random}`;
-}
-
-function submitOrderToSheet(order) {
-  if (!shop.orderSheetEndpoint) return;
-  const payload = new FormData();
-  Object.entries({ orderId: order.id, placedAt: order.placedAt, customerName: order.name, phone: order.phone, email: order.email, address: order.address, payment: order.payment, upiReference: order.upiReference, products: order.products.join(" | "), total: order.total, eta: order.eta, stage: order.stage }).forEach(([key, value]) => payload.append(key, value));
-  fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {});
-}
-
-function orderEmailUrl(order) {
-  const to = content.profile?.email || "kreativeadda.avi@gmail.com";
-  const subject = `Kreative.Adda Order ${order.id}`;
-  const body = `New Kreative.Adda order\n\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}\n\nPlease send this email to confirm the order.`;
-  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-function openEmailDraft(order) {
-  window.location.href = orderEmailUrl(order);
-}
-
-function showConfirmation(order) {
-  const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}`);
-  const emailUrl = orderEmailUrl(order);
-  orderConfirmation.hidden = false;
-  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Delivery ETA: ${escapeHtml(order.eta || "As mentioned on product")}</p><p>Your email app should open with the order details ready. Please press Send to confirm the order.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill" href="${emailUrl}" aria-label="Send order email"><span>Send order email</span></a><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
-  orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function renderTracking(activeStage = stages[0]) {
-  trackingSteps.innerHTML = "";
-  stages.forEach((stage) => {
-    const step = document.createElement("div");
-    step.className = stage === activeStage ? "tracking-step active" : "tracking-step";
-    step.textContent = stage;
-    trackingSteps.append(step);
-  });
-}
-
-function renderReviews() {
-  const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]");
-  reviewList.innerHTML = reviews.length ? "" : "<p class='empty-cart'>No reviews yet.</p>";
-  reviews.forEach((review) => {
-    const item = document.createElement("article");
-    item.className = "review-card";
-    item.innerHTML = `<strong>${escapeHtml(review.name)}</strong><span>${"★".repeat(Number(review.rating))}${"☆".repeat(5 - Number(review.rating))}</span><p>${escapeHtml(review.text)}</p>`;
-    reviewList.append(item);
-  });
-}
-
-function saveReview(event) {
-  event.preventDefault();
-  const data = new FormData(reviewForm);
-  const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]");
-  reviews.unshift({ name: data.get("reviewName"), rating: data.get("rating"), text: data.get("review") });
-  localStorage.setItem("kreativeAddaReviews", JSON.stringify(reviews));
-  reviewForm.reset();
-  renderReviews();
-}
-
-function isValidUpiReference(value) {
-  const clean = String(value || "").trim();
-  return /^\d{12}$/.test(clean) || /^[A-Za-z0-9][A-Za-z0-9/-]{8,24}$/.test(clean);
-}
+function createOrderId() { const date = new Date(); const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`; const random = Math.random().toString(36).slice(2, 8).toUpperCase(); return `KA-${stamp}-${random}`; }
+function submitOrderToSheet(order) { if (!shop.orderSheetEndpoint) return; const payload = new FormData(); Object.entries({ orderId: order.id, placedAt: order.placedAt, customerName: order.name, phone: order.phone, email: order.email, address: order.address, payment: order.payment, upiReference: order.upiReference, products: order.products.join(" | "), total: order.total, eta: order.eta, stage: order.stage }).forEach(([key, value]) => payload.append(key, value)); fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {}); }
+function orderEmailUrl(order) { const to = content.profile?.email || "kreativeadda.avi@gmail.com"; const subject = `Kreative.Adda Order ${order.id}`; const body = `New Kreative.Adda order\n\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}\n\nPlease send this email to confirm the order.`; return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
+function openEmailDraft(order) { window.location.href = orderEmailUrl(order); }
+function showConfirmation(order) { const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}`); const emailUrl = orderEmailUrl(order); orderConfirmation.hidden = false; orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Delivery ETA: ${escapeHtml(order.eta || "As mentioned on product")}</p><p>Your email app should open with the order details ready. Please press Send to confirm the order.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill" href="${emailUrl}" aria-label="Send order email"><span>Send order email</span></a><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`; orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" }); }
+function renderTracking(activeStage = stages[0]) { trackingSteps.innerHTML = ""; stages.forEach((stage) => { const step = document.createElement("div"); step.className = stage === activeStage ? "tracking-step active" : "tracking-step"; step.textContent = stage; trackingSteps.append(step); }); }
+function renderReviews() { const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]"); reviewList.innerHTML = reviews.length ? "" : "<p class='empty-cart'>No reviews yet.</p>"; reviews.forEach((review) => { const item = document.createElement("article"); item.className = "review-card"; item.innerHTML = `<strong>${escapeHtml(review.name)}</strong><span>${"★".repeat(Number(review.rating))}${"☆".repeat(5 - Number(review.rating))}</span><p>${escapeHtml(review.text)}</p>`; reviewList.append(item); }); }
+function saveReview(event) { event.preventDefault(); const data = new FormData(reviewForm); const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]"); reviews.unshift({ name: data.get("reviewName"), rating: data.get("rating"), text: data.get("review") }); localStorage.setItem("kreativeAddaReviews", JSON.stringify(reviews)); reviewForm.reset(); renderReviews(); }
+function isValidUpiReference(value) { const clean = String(value || "").trim(); return /^\d{12}$/.test(clean) || /^[A-Za-z0-9][A-Za-z0-9/-]{8,24}$/.test(clean); }
 function yes(value) { return String(value || "").trim().toLowerCase() === "yes"; }
 function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
 
 shopGrid.addEventListener("click", (event) => {
   const addId = event.target.dataset.add;
   const buyId = event.target.dataset.buy;
+  const prevId = event.target.dataset.imagePrev;
+  const nextId = event.target.dataset.imageNext;
+  if (prevId) moveProductImage(prevId, -1);
+  if (nextId) moveProductImage(nextId, 1);
   if (addId) addToCart(addId);
   if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); }
 });
-cartItems.addEventListener("click", (event) => {
-  if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); }
-});
+cartItems.addEventListener("click", (event) => { if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); } });
 document.querySelector("#clearCart").addEventListener("click", () => { cart.splice(0, cart.length); renderCart(); });
 paymentMode.addEventListener("change", updatePaymentUi);
 checkoutForm.addEventListener("submit", placeOrder);

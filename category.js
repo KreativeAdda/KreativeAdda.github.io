@@ -30,7 +30,7 @@ function renderCategory() {
 }
 
 function mediaMarkup(item) {
-  if (item.type === "image" && item.src) return `<img src="${item.src}" alt="${escapeHtml(item.title)}" loading="lazy" />`;
+  if (item.type === "image" && item.src) return `<img src="${item.src}" alt="${escapeHtml(item.title)}" loading="lazy" /><span class="card-watermark">Kreative.Adda</span>`;
   if (item.type === "youtube" && item.youtube) {
     const embed = youtubeEmbedUrl(item.youtube);
     return embed ? `<iframe src="${embed}" title="${escapeHtml(item.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>` : placeholderMarkup(item);
@@ -42,7 +42,7 @@ function openImageViewer(item) {
   if (!item?.src) return;
   const viewer = document.createElement("div");
   viewer.className = "image-viewer";
-  viewer.innerHTML = `<button class="image-viewer-close" type="button" aria-label="Close full photo">Close</button><figure><div style="position:relative;display:flex;justify-content:center;max-height:78vh;"><img src="${item.src}" alt="${escapeHtml(item.title)}" /><span style="position:absolute;right:4%;bottom:5%;padding:.35rem .7rem;border:1px solid rgba(255,255,255,.28);border-radius:999px;color:rgba(255,255,255,.46);background:rgba(0,0,0,.18);font-weight:900;letter-spacing:0;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.7);">Kreative.Adda</span></div><figcaption><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.caption || "")}</span></figcaption></figure>`;
+  viewer.innerHTML = `<button class="image-viewer-close" type="button" aria-label="Close full photo">Close</button><figure><div class="viewer-image-wrap"><img src="${item.src}" alt="${escapeHtml(item.title)}" /><span class="viewer-watermark">Kreative.Adda</span></div><figcaption><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.caption || "")}</span></figcaption></figure>`;
   document.body.append(viewer);
   document.body.classList.add("viewer-open");
   const close = () => { viewer.remove(); document.body.classList.remove("viewer-open"); };

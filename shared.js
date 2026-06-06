@@ -46,10 +46,7 @@
         }
       ]
     },
-    items: [
-      { id: "sample-dishes", title: "Khana-Khazana", category: "dishes", type: "note", caption: "Upload dish photos to the GitHub repository and list them in shared.js." },
-      { id: "sample-sargam", title: "Sargam", category: "sargam", type: "youtube", youtube: "", caption: "YouTube links can be embedded here so visitors watch from the website." }
-    ]
+    items: []
   };
 
   function categoryById(id) {

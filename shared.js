@@ -14,7 +14,7 @@
       about: "Welcome to my personal creative adda: a colorful space for food, photos, natak, sargam, photography and all the little memories that deserve a place of their own.",
       youtube: "#",
       instagram: "#",
-      email: "",
+      email: "kreativeadda.avi@gmail.com",
       ownerPhoto: "assets/owner-photo.jpg"
     },
     music: {

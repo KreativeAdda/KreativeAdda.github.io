@@ -12,7 +12,7 @@
     profile: {
       owner: "Avi Narang",
       about: "Welcome to my personal creative adda: a colorful space for food, photos, natak, sargam, photography and all the little memories that deserve a place of their own.",
-      youtube: "#",
+      youtube: "https://youtube.com/@kreativeadda?si=7Zf0meAXE-xwslH-",
       instagram: "https://www.instagram.com/kreativ.adda?igsh=aW5pZ3J6dWUxNHdt",
       email: "kreativeadda.avi@gmail.com",
       ownerPhoto: "assets/owner-photo.jpg"

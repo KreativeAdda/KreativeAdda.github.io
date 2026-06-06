@@ -1,0 +1,133 @@
+const { content } = window.KreativeAdda;
+const shop = content.shop || { products: [] };
+const cart = [];
+const stages = ["Order Placed", "Order Packed", "Order Shipped", "Out for Delivery", "Delivered"];
+const shopGrid = document.querySelector("#shopGrid");
+const cartItems = document.querySelector("#cartItems");
+const cartTotal = document.querySelector("#cartTotal");
+const paymentMode = document.querySelector("#paymentMode");
+const upiBox = document.querySelector("#upiBox");
+const checkoutForm = document.querySelector("#checkoutForm");
+const orderConfirmation = document.querySelector("#orderConfirmation");
+const trackingSteps = document.querySelector("#trackingSteps");
+const reviewForm = document.querySelector("#reviewForm");
+const reviewList = document.querySelector("#reviewList");
+
+function renderProducts() {
+  shopGrid.innerHTML = "";
+  (shop.products || []).forEach((product) => {
+    const card = document.createElement("article");
+    card.className = "shop-card";
+    const custom = yes(product.customizeAvailable) ? `<label>Customization input<textarea data-custom-for="${product.id}" placeholder="Write your customization request"></textarea></label>` : "";
+    card.innerHTML = `<div class="shop-media"><img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span></div><div class="shop-copy"><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
+    shopGrid.append(card);
+  });
+}
+
+function addToCart(productId) {
+  const product = shop.products.find((item) => item.id === productId);
+  if (!product) return;
+  const customInput = document.querySelector(`[data-custom-for="${productId}"]`);
+  cart.push({ ...product, customRequest: customInput ? customInput.value.trim() : "" });
+  renderCart();
+}
+
+function renderCart() {
+  cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>";
+  cart.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "cart-row";
+    row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>₹${Number(item.price || 0).toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`;
+    cartItems.append(row);
+  });
+  const total = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+  cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`;
+  renderPaymentOptions();
+}
+
+function renderPaymentOptions() {
+  const codAllowed = cart.length > 0 && cart.every((item) => yes(item.codAvailable));
+  paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>UPI</option>" : "<option value='UPI'>UPI</option>";
+  upiBox.hidden = paymentMode.value !== "UPI";
+}
+
+function placeOrder(event) {
+  event.preventDefault();
+  if (!cart.length) { alert("Please add at least one product to cart."); return; }
+  const data = new FormData(checkoutForm);
+  const orderId = `KA-${Date.now().toString().slice(-6)}`;
+  const order = {
+    id: orderId,
+    name: data.get("name"),
+    phone: data.get("phone"),
+    email: data.get("email"),
+    address: data.get("address"),
+    payment: data.get("payment"),
+    products: cart.map((item) => `${item.name}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`),
+    total: cart.reduce((sum, item) => sum + Number(item.price || 0), 0),
+    stage: stages[0]
+  };
+  localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order));
+  showConfirmation(order);
+  renderTracking(order.stage);
+}
+
+function showConfirmation(order) {
+  const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}`);
+  orderConfirmation.hidden = false;
+  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Your order is recorded on this device. Please send the order details to Avi on WhatsApp so it can be confirmed and managed.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
+  orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderTracking(activeStage = stages[0]) {
+  trackingSteps.innerHTML = "";
+  stages.forEach((stage) => {
+    const step = document.createElement("div");
+    step.className = stage === activeStage ? "tracking-step active" : "tracking-step";
+    step.textContent = stage;
+    trackingSteps.append(step);
+  });
+}
+
+function renderReviews() {
+  const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]");
+  reviewList.innerHTML = reviews.length ? "" : "<p class='empty-cart'>No reviews yet.</p>";
+  reviews.forEach((review) => {
+    const item = document.createElement("article");
+    item.className = "review-card";
+    item.innerHTML = `<strong>${escapeHtml(review.name)}</strong><span>${"★".repeat(Number(review.rating))}${"☆".repeat(5 - Number(review.rating))}</span><p>${escapeHtml(review.text)}</p>`;
+    reviewList.append(item);
+  });
+}
+
+function saveReview(event) {
+  event.preventDefault();
+  const data = new FormData(reviewForm);
+  const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]");
+  reviews.unshift({ name: data.get("reviewName"), rating: data.get("rating"), text: data.get("review") });
+  localStorage.setItem("kreativeAddaReviews", JSON.stringify(reviews));
+  reviewForm.reset();
+  renderReviews();
+}
+
+function yes(value) { return String(value || "").trim().toLowerCase() === "yes"; }
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+
+shopGrid.addEventListener("click", (event) => {
+  const addId = event.target.dataset.add;
+  const buyId = event.target.dataset.buy;
+  if (addId) addToCart(addId);
+  if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); }
+});
+cartItems.addEventListener("click", (event) => {
+  if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); }
+});
+document.querySelector("#clearCart").addEventListener("click", () => { cart.splice(0, cart.length); renderCart(); });
+paymentMode.addEventListener("change", () => { upiBox.hidden = paymentMode.value !== "UPI"; });
+checkoutForm.addEventListener("submit", placeOrder);
+reviewForm.addEventListener("submit", saveReview);
+
+renderProducts();
+renderCart();
+renderTracking();
+renderReviews();

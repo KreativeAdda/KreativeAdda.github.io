@@ -83,7 +83,6 @@ paymentMode.addEventListener("change", updatePaymentUi);
 checkoutForm.addEventListener("submit", placeOrder);
 reviewForm.addEventListener("submit", saveReview);
 
-setupKreativeMusic(content);
 setShopStatus();
 renderProducts();
 renderCart();

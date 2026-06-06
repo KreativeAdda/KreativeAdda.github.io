@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Category | Kreative.Adda</title>
     <link rel="stylesheet" href="styles.css" />
+    <style>.shop-status.shop-open{color:#052b13;background:#50fa7b;border-color:#50fa7b;font-weight:900}.shop-status.shop-closed{color:#fff;background:#b4232a;border-color:#ff6b6b;font-weight:900}</style>
   </head>
   <body>
     <div class="noise"></div>
@@ -12,7 +13,7 @@
     <button class="music-toggle" id="musicToggle" type="button" aria-label="Play background music">Music</button>
     <header class="topbar">
       <a class="brand" href="index.html" aria-label="Kreative.Adda home"><img src="assets/logo.webp" alt="Kreative.Adda logo" /><span>Kreative<span>.Adda</span></span></a>
-      <nav aria-label="Category navigation"><a href="index.html#gallery">Gallery</a><a href="shop.html">Shop</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav>
+      <nav aria-label="Category navigation"><a href="index.html#gallery">Gallery</a><a id="shopNavLink" class="shop-status shop-closed" href="shop.html">Shop</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav>
     </header>
     <main class="shop-shell">
       <section class="shop-hero">

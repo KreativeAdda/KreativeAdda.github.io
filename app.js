@@ -26,6 +26,16 @@ function renderHome() {
   setLink("#instagramLink", content.profile.instagram);
   const emailLink = document.querySelector("#contactEmail");
   if (content.profile.email) { emailLink.href = `mailto:${content.profile.email}`; emailLink.textContent = content.profile.email; }
+  setShopStatus();
+}
+
+function setShopStatus() {
+  const shopLink = document.querySelector("#shopNavLink");
+  if (!shopLink) return;
+  const products = content.shop?.products || [];
+  const hasStock = products.some((product) => Number(product.stock || 0) > 0);
+  shopLink.classList.toggle("shop-open", hasStock);
+  shopLink.classList.toggle("shop-closed", !hasStock);
 }
 
 function setupMusic() {

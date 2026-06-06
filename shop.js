@@ -7,6 +7,9 @@ const cartItems = document.querySelector("#cartItems");
 const cartTotal = document.querySelector("#cartTotal");
 const paymentMode = document.querySelector("#paymentMode");
 const upiBox = document.querySelector("#upiBox");
+const upiAmount = document.querySelector("#upiAmount");
+const upiPaid = document.querySelector("#upiPaid");
+const upiReference = document.querySelector("#upiReference");
 const checkoutForm = document.querySelector("#checkoutForm");
 const orderConfirmation = document.querySelector("#orderConfirmation");
 const trackingSteps = document.querySelector("#trackingSteps");
@@ -15,45 +18,75 @@ const reviewList = document.querySelector("#reviewList");
 
 function renderProducts() {
   shopGrid.innerHTML = "";
-  (shop.products || []).forEach((product) => {
+  const products = (shop.products || []).filter((product) => Number(product.stock || 0) > 0);
+  if (!products.length) {
+    shopGrid.innerHTML = "<p class='no-products'>No product is available.</p>";
+    return;
+  }
+  products.forEach((product) => {
+    const stock = Math.max(0, Number(product.stock || 0));
+    const maxQty = Math.min(stock, 5);
+    const qtyOptions = Array.from({ length: maxQty }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("");
     const card = document.createElement("article");
     card.className = "shop-card";
     const custom = yes(product.customizeAvailable) ? `<label>Customization input<textarea data-custom-for="${product.id}" placeholder="Write your customization request"></textarea></label>` : "";
-    card.innerHTML = `<div class="shop-media"><img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span></div><div class="shop-copy"><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
+    card.innerHTML = `<div class="shop-media"><img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span></div><div class="shop-copy"><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Stock</dt><dd>${stock}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl><label>Quantity<select data-qty-for="${product.id}">${qtyOptions}</select></label>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
     shopGrid.append(card);
   });
 }
 
 function addToCart(productId) {
   const product = shop.products.find((item) => item.id === productId);
-  if (!product) return;
+  if (!product || Number(product.stock || 0) <= 0) return;
+  const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`);
   const customInput = document.querySelector(`[data-custom-for="${productId}"]`);
-  cart.push({ ...product, customRequest: customInput ? customInput.value.trim() : "" });
+  const stock = Number(product.stock || 0);
+  const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5);
+  cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" });
   renderCart();
 }
 
 function renderCart() {
   cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>";
   cart.forEach((item, index) => {
+    const lineTotal = Number(item.price || 0) * Number(item.quantity || 1);
     const row = document.createElement("div");
     row.className = "cart-row";
-    row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>₹${Number(item.price || 0).toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`;
+    row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`;
     cartItems.append(row);
   });
-  const total = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+  const total = getCartTotal();
   cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`;
+  if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`;
   renderPaymentOptions();
 }
 
+function getCartTotal() {
+  return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
+}
+
 function renderPaymentOptions() {
+  const selected = paymentMode.value;
   const codAllowed = cart.length > 0 && cart.every((item) => yes(item.codAvailable));
-  paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>UPI</option>" : "<option value='UPI'>UPI</option>";
-  upiBox.hidden = paymentMode.value !== "UPI";
+  paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>";
+  if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected;
+  updatePaymentUi();
+}
+
+function updatePaymentUi() {
+  const isUpi = paymentMode.value === "UPI";
+  upiBox.hidden = !isUpi;
+  upiPaid.required = isUpi;
+  upiReference.required = isUpi;
 }
 
 function placeOrder(event) {
   event.preventDefault();
   if (!cart.length) { alert("Please add at least one product to cart."); return; }
+  if (paymentMode.value === "UPI" && (!upiPaid.checked || !isValidUpiReference(upiReference.value))) {
+    alert("Please complete UPI payment and enter a valid UPI transaction/reference ID. Common UPI UTR is 12 digits.");
+    return;
+  }
   const data = new FormData(checkoutForm);
   const order = {
     id: createOrderId(),
@@ -63,8 +96,10 @@ function placeOrder(event) {
     email: data.get("email"),
     address: data.get("address"),
     payment: data.get("payment"),
-    products: cart.map((item) => `${item.name}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`),
-    total: cart.reduce((sum, item) => sum + Number(item.price || 0), 0),
+    upiReference: paymentMode.value === "UPI" ? upiReference.value.trim() : "",
+    products: cart.map((item) => `${item.name} x ${item.quantity}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`),
+    total: getCartTotal(),
+    eta: cart.map((item) => item.eta).filter(Boolean).join(" | "),
     stage: stages[0]
   };
   localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order));
@@ -92,8 +127,10 @@ function submitOrderToSheet(order) {
     email: order.email,
     address: order.address,
     payment: order.payment,
+    upiReference: order.upiReference,
     products: order.products.join(" | "),
     total: order.total,
+    eta: order.eta,
     stage: order.stage
   }).forEach(([key, value]) => payload.append(key, value));
   fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {});
@@ -102,7 +139,7 @@ function submitOrderToSheet(order) {
 function orderEmailUrl(order) {
   const to = content.profile?.email || "kreativeadda.avi@gmail.com";
   const subject = `Kreative.Adda Order ${order.id}`;
-  const body = `New Kreative.Adda order\n\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\n\nPlease send this email to confirm the order.`;
+  const body = `New Kreative.Adda order\n\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}\n\nPlease send this email to confirm the order.`;
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -111,10 +148,10 @@ function openEmailDraft(order) {
 }
 
 function showConfirmation(order) {
-  const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}`);
+  const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}`);
   const emailUrl = orderEmailUrl(order);
   orderConfirmation.hidden = false;
-  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Your email app should open with the order details ready. Please press Send to confirm the order.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill" href="${emailUrl}" aria-label="Send order email"><span>Send order email</span></a><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
+  orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Delivery ETA: ${escapeHtml(order.eta || "As mentioned on product")}</p><p>Your email app should open with the order details ready. Please press Send to confirm the order.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill" href="${emailUrl}" aria-label="Send order email"><span>Send order email</span></a><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`;
   orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -149,6 +186,10 @@ function saveReview(event) {
   renderReviews();
 }
 
+function isValidUpiReference(value) {
+  const clean = String(value || "").trim();
+  return /^\d{12}$/.test(clean) || /^[A-Za-z0-9][A-Za-z0-9/-]{8,24}$/.test(clean);
+}
 function yes(value) { return String(value || "").trim().toLowerCase() === "yes"; }
 function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
 
@@ -162,7 +203,7 @@ cartItems.addEventListener("click", (event) => {
   if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); }
 });
 document.querySelector("#clearCart").addEventListener("click", () => { cart.splice(0, cart.length); renderCart(); });
-paymentMode.addEventListener("change", () => { upiBox.hidden = paymentMode.value !== "UPI"; });
+paymentMode.addEventListener("change", updatePaymentUi);
 checkoutForm.addEventListener("submit", placeOrder);
 reviewForm.addEventListener("submit", saveReview);
 

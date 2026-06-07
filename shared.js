@@ -57,9 +57,9 @@
       {
         category: "photography",
         type: "image",
-        title: "Golden Horizon",
+        title: "Nature’s Tiny Masterpiece",
         src: "assets/photo2.jpg",
-        caption: "Framed by nature, serenaded by the sunset."
+        caption: "Held in my hand, crafted by nature — proof that even the smallest leaves can steal the spotlight."
       },
       {
       category: "dishes",

@@ -24,7 +24,7 @@
     daily: {
       word: "Serenaded",
       meaning: "Surrounded by nature and gently enchanted by the beauty of the sunset.",
-      thought: "Saturday is for slowing down, soaking in the moment, and finding joy in the simple things."
+      thought: "Every day is a second chance to do better."
     },
     shop: {
       ownerPhone: "+91-9457171931",

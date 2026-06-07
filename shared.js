@@ -55,6 +55,13 @@
         caption: "Framed by nature, serenaded by the sunset."
       },
       {
+        category: "photography",
+        type: "image",
+        title: "Golden Horizon",
+        src: "assets/photo2.jpg",
+        caption: "Framed by nature, serenaded by the sunset."
+      },
+      {
       category: "dishes",
         type: "image",
         title: "Dragon Pearl Bites",

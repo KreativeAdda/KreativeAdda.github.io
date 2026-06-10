@@ -1,29 +1,44 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Category | Kreative.Adda</title>
-    <link rel="stylesheet" href="styles.css?v=20260606b" />
-    <style>.shop-status.shop-open{color:#052b13;background:#50fa7b;border-color:#50fa7b;font-weight:900}.shop-status.shop-closed{color:#fff;background:#b4232a;border-color:#ff6b6b;font-weight:900}</style>
-  </head>
-  <body>
-    <div class="noise"></div>
-    <header class="topbar">
-      <a class="brand" href="index.html" aria-label="Kreative.Adda home"><img src="assets/logo.webp" alt="Kreative.Adda logo" /><span>Kreative<span>.Adda</span></span></a>
-      <nav aria-label="Category navigation"><a href="index.html#gallery">Gallery</a><a id="shopNavLink" class="shop-status shop-closed" href="shop.html">Shop</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav>
-    </header>
-    <main class="shop-shell">
-      <section class="shop-hero">
-        <p class="eyebrow" id="categoryEyebrow">Kreative.Adda Gallery</p>
-        <h1 id="categoryTitle">Category</h1>
-      </section>
-      <section class="section">
-        <div class="gallery-grid" id="categoryGalleryGrid"></div>
-        <p class="empty-state visible" id="categoryEmptyState">No public uploads yet for this category.</p>
-      </section>
-    </main>
-    <footer><span class="footer-credit">Kreative.Adda by Avi Narang <img class="footer-logo" src="assets/footer-logo.png" alt="Avi Narang personal logo" /></span></footer>
-    <script src="shared.js?v=20260606b"></script><script src="category.js?v=20260606b"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Category | Kreativ.Adda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260610a" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Kreativ.Adda home">
+      <img src="assets/logo.webp" alt="Kreativ.Adda logo" />
+      <span>Kreativ<span>.Adda</span></span>
+    </a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="index.html#gallery">Gallery</a>
+      <a id="shopNavLink" class="shop-link shop-link-empty" href="shop.html">Shop</a>
+      <a href="index.html#links">Links</a>
+    </nav>
+  </header>
+
+  <main class="category-page">
+    <section class="category-hero">
+      <p class="section-kicker" id="categoryEyebrow">Kreativ.Adda Gallery</p>
+      <h1 id="categoryTitle">Category</h1>
+      <p id="categoryDescription">Explore this creative corner.</p>
+    </section>
+
+    <section class="category-items" id="categoryItems"></section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Kreativ.Adda by Avi Narang</span>
+    <img class="footer-logo" src="assets/footer-logo.png" alt="Avi Narang mark" />
+    <a href="admin.html">Private Admin</a>
+  </footer>
+
+  <script src="shared.js?v=20260610a"></script>
+  <script src="category.js?v=20260610a"></script>
+</body>
 </html>

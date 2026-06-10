@@ -1,0 +1,44 @@
+.hero-art {
+  display: grid !important;
+  place-items: center !important;
+}
+
+.hero-art span {
+  display: none !important;
+}
+
+.hero-art img {
+  width: 76% !important;
+  aspect-ratio: 1 !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  filter: saturate(1.18) contrast(1.08) !important;
+}
+
+.top-portrait {
+  display: none !important;
+}
+
+.hero-logo {
+  display: none !important;
+}
+
+.hero-content {
+  justify-self: start !important;
+  text-align: left !important;
+}
+
+.hero-actions {
+  justify-content: flex-start !important;
+}
+
+@media (max-width: 920px) {
+  .hero-content {
+    justify-self: center !important;
+    text-align: center !important;
+  }
+
+  .hero-actions {
+    justify-content: center !important;
+  }
+}

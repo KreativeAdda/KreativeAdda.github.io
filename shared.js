@@ -93,6 +93,9 @@
     shopLink.classList.toggle("shop-link-empty", !hasStock);
     shopLink.classList.toggle("shop-open", hasStock);
     shopLink.classList.toggle("shop-closed", !hasStock);
+    shopLink.style.background = hasStock ? "rgba(102, 255, 127, .22)" : "rgba(255, 75, 95, .2)";
+    shopLink.style.borderColor = hasStock ? "rgba(102, 255, 127, .68)" : "rgba(255, 75, 95, .65)";
+    shopLink.style.boxShadow = hasStock ? "0 0 18px rgba(102, 255, 127, .18)" : "0 0 18px rgba(255, 75, 95, .14)";
   }
 
   window.KreativeAddaContent = content;

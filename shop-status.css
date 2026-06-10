@@ -1,0 +1,14 @@
+#shopNavLink,
+#shopNavLink.shop-link-empty,
+#shopNavLink.shop-closed {
+  background: rgba(255, 75, 95, .24) !important;
+  border-color: rgba(255, 75, 95, .78) !important;
+  box-shadow: 0 0 20px rgba(255, 75, 95, .2) !important;
+}
+
+#shopNavLink.shop-link-open,
+#shopNavLink.shop-open {
+  background: rgba(102, 255, 127, .24) !important;
+  border-color: rgba(102, 255, 127, .78) !important;
+  box-shadow: 0 0 20px rgba(102, 255, 127, .2) !important;
+}

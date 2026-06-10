@@ -1,90 +1,361 @@
-const { content } = window.KreativeAdda;
-const shop = content.shop || { products: [] };
+const content = window.KreativeAddaContent;
+const { applyShopStatus } = window.KreativeAdda;
+const shop = content.shop || {};
+const products = shop.products || [];
+const productsEl = document.getElementById("shopProducts");
+const cartPanel = document.getElementById("cartPanel");
 const cart = [];
-const stages = ["Order Placed", "Order Packed", "Order Shipped", "Out for Delivery", "Delivered"];
-const shopGrid = document.querySelector("#shopGrid");
-const cartPanel = document.querySelector(".cart-panel");
-const cartItems = document.querySelector("#cartItems");
-const cartTotal = document.querySelector("#cartTotal");
-const paymentMode = document.querySelector("#paymentMode");
-const upiBox = document.querySelector("#upiBox");
-const upiAmount = document.querySelector("#upiAmount");
-const upiPaid = document.querySelector("#upiPaid");
-const upiReference = document.querySelector("#upiReference");
-const checkoutForm = document.querySelector("#checkoutForm");
-const orderConfirmation = document.querySelector("#orderConfirmation");
-const trackingSteps = document.querySelector("#trackingSteps");
-const reviewForm = document.querySelector("#reviewForm");
-const reviewList = document.querySelector("#reviewList");
-let hasAvailableProducts = false;
+const reviewsKey = "kreativeAddaReviews";
 
-function setShopStatus() {
-  const shopLink = document.querySelector("#shopNavLink");
-  if (!shopLink) return;
-  const products = content.shop?.products || [];
-  const hasStock = products.some((product) => Number(product.stock || 0) > 0);
-  shopLink.classList.toggle("shop-open", hasStock);
-  shopLink.classList.toggle("shop-closed", !hasStock);
+applyShopStatus(content, document);
+
+function rupee(value) {
+  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+}
+
+function savedReviews() {
+  try {
+    return JSON.parse(localStorage.getItem(reviewsKey) || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveReview(productId, review) {
+  const reviews = savedReviews();
+  reviews[productId] = reviews[productId] || [];
+  reviews[productId].push(review);
+  localStorage.setItem(reviewsKey, JSON.stringify(reviews));
+}
+
+function orderId() {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const random = Math.floor(100 + Math.random() * 900);
+  return `KA-${stamp}-${random}`;
+}
+
+function validUpiReference(value) {
+  const cleaned = String(value || "").trim();
+  return /^[A-Za-z0-9]{10,24}$/.test(cleaned);
+}
+
+function productImages(product) {
+  return [product.image, product.image2, product.image3, product.image4].filter(Boolean).slice(0, 4);
+}
+
+function ensureShopViewerStyles() {
+  if (document.getElementById("shopViewerStyles")) return;
+  const style = document.createElement("style");
+  style.id = "shopViewerStyles";
+  style.textContent = `
+    .product-watermark-wrap { position: relative; overflow: hidden; }
+    .product-watermark,
+    .shop-viewer-watermark {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,.42);
+      text-shadow: 0 1px 8px rgba(0,0,0,.45);
+      pointer-events: none;
+      font-weight: 800;
+      letter-spacing: 0;
+      white-space: nowrap;
+      z-index: 3;
+    }
+    .product-watermark { font-size: clamp(.68rem, 1.6vw, .82rem); }
+    .shop-viewer-watermark { font-size: clamp(.95rem, 2vw, 1.35rem); bottom: 14px; }
+    .shop-image-viewer {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(5, 8, 12, .88);
+    }
+    .shop-image-inner { position: relative; max-width: min(94vw, 1100px); max-height: 88vh; }
+    .shop-image-inner img {
+      display: block;
+      max-width: 100%;
+      max-height: 88vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.42);
+    }
+    .shop-image-close {
+      position: absolute;
+      top: -14px;
+      right: -14px;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #111111;
+      font-size: 1.35rem;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.24);
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function openShopImage(src, alt) {
+  ensureShopViewerStyles();
+  const viewer = document.createElement("div");
+  viewer.className = "shop-image-viewer";
+  viewer.innerHTML = `
+    <div class="shop-image-inner">
+      <button class="shop-image-close" type="button" aria-label="Close full image">×</button>
+      <img src="${src}" alt="${alt || "Product image"}" />
+      <span class="shop-viewer-watermark">Kreativ.Adda</span>
+    </div>
+  `;
+  const close = () => viewer.remove();
+  viewer.addEventListener("click", (event) => {
+    if (event.target === viewer) close();
+  });
+  viewer.querySelector(".shop-image-close").addEventListener("click", close);
+  document.body.appendChild(viewer);
 }
 
 function renderProducts() {
-  shopGrid.innerHTML = "";
-  const products = (shop.products || []).filter((product) => Number(product.stock || 0) > 0);
-  hasAvailableProducts = products.length > 0;
-  cartPanel.hidden = !hasAvailableProducts;
-  setShopStatus();
-  if (!hasAvailableProducts) {
-    paymentMode.innerHTML = "";
-    upiBox.hidden = true;
-    shopGrid.innerHTML = "<p class='no-products'>No product is available.</p>";
+  if (!products.length) {
+    productsEl.innerHTML = `<div class="empty-state">No product is available.</div>`;
+    renderCart();
     return;
   }
 
-  products.forEach((product) => {
-    const stock = Math.max(0, Number(product.stock || 0));
-    const maxQty = Math.min(stock, 5);
-    const qtyOptions = Array.from({ length: maxQty }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("");
+  ensureShopViewerStyles();
+  const reviews = savedReviews();
+  productsEl.innerHTML = products.map((product) => {
     const images = productImages(product);
-    const hasMultipleImages = images.length > 1;
-    const card = document.createElement("article");
-    card.className = "shop-card";
-    const custom = yes(product.customizeAvailable) ? `<label>Customization input<textarea data-custom-for="${product.id}" placeholder="Write your customization request"></textarea></label>` : "";
-    card.innerHTML = `<div class="shop-media"><img data-product-image="${product.id}" data-image-index="0" data-view-product="${product.id}" src="${images[0]}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false" /><span hidden>${escapeHtml(product.name.slice(0, 1))}</span><span class="card-watermark">Kreative.Adda</span>${hasMultipleImages ? `<button class="image-nav image-prev" type="button" data-image-prev="${product.id}" aria-label="Previous product image">‹</button><button class="image-nav image-next" type="button" data-image-next="${product.id}" aria-label="Next product image">›</button><small class="image-count" data-image-count="${product.id}">1/${images.length}</small>` : ""}</div><div class="shop-copy"><button class="title-view-button" type="button" data-view-product="${product.id}">${escapeHtml(product.name)}</button><p>${escapeHtml(product.about)}</p><dl><div><dt>Price</dt><dd>₹${Number(product.price || 0).toLocaleString("en-IN")}</dd></div><div><dt>Stock</dt><dd>${stock}</dd></div><div><dt>Customize Available</dt><dd>${escapeHtml(product.customizeAvailable)}</dd></div><div><dt>COD</dt><dd>${escapeHtml(product.codAvailable)}</dd></div><div><dt>ETA</dt><dd>${escapeHtml(product.eta)}</dd></div></dl><label>Quantity<select data-qty-for="${product.id}">${qtyOptions}</select></label>${custom}<div class="shop-actions"><button type="button" data-add="${product.id}">Add to cart</button><button type="button" data-buy="${product.id}">Buy now</button></div></div>`;
-    shopGrid.append(card);
+    const stock = Math.max(0, Math.min(Number(product.stock || 0), 5));
+    const reviewList = reviews[product.id] || [];
+    const gallery = images.length
+      ? `<div class="product-gallery" data-product="${product.id}">
+          <button type="button" class="gallery-arrow prev" aria-label="Previous image">‹</button>
+          <div class="product-watermark-wrap">
+            <img src="${images[0]}" alt="${product.name}" data-gallery-image />
+            <span class="product-watermark">Kreativ.Adda</span>
+          </div>
+          <button type="button" class="gallery-arrow next" aria-label="Next image">›</button>
+          <div class="gallery-count">1 / ${images.length}</div>
+        </div>`
+      : `<div class="product-image placeholder">No Image</div>`;
+
+    return `
+      <article class="product-card" data-product-id="${product.id}">
+        ${gallery}
+        <div class="product-copy">
+          <p class="section-kicker">${stock ? `${stock} in stock` : "Out of stock"}</p>
+          <h2>${product.name}</h2>
+          <p>${product.about}</p>
+          <div class="product-meta">
+            <span>${rupee(product.price)}</span>
+            <span>Customize: ${product.customize ? "Yes" : "No"}</span>
+            <span>COD: ${product.cod ? "Yes" : "No"}</span>
+            <span>ETA: ${product.eta || "To be confirmed"}</span>
+          </div>
+          <label>Quantity
+            <select data-qty ${stock ? "" : "disabled"}>
+              ${Array.from({ length: stock }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("")}
+            </select>
+          </label>
+          ${product.customize ? `<label>Customization
+            <textarea data-custom placeholder="Write customization here"></textarea>
+          </label>` : ""}
+          <div class="product-actions">
+            <button type="button" data-add ${stock ? "" : "disabled"}>Add to Cart</button>
+            <button type="button" data-buy ${stock ? "" : "disabled"}>Buy Now</button>
+          </div>
+          <form class="review-form" data-review-form>
+            <label>Rate this product
+              <select data-rating>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+              </select>
+            </label>
+            <label>Review
+              <textarea data-review-text placeholder="Write a review"></textarea>
+            </label>
+            <button type="submit">Add Review</button>
+          </form>
+          <div class="review-list">
+            ${reviewList.length ? reviewList.map((review) => `<p><strong>${review.rating}★</strong> ${review.text}</p>`).join("") : "<p>No reviews yet.</p>"}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  productsEl.querySelectorAll(".product-card").forEach((card) => {
+    const product = products.find((item) => item.id === card.dataset.productId);
+    const images = productImages(product);
+    let activeImage = 0;
+
+    const image = card.querySelector("[data-gallery-image]");
+    const count = card.querySelector(".gallery-count");
+    const updateImage = () => {
+      if (!image || !images.length) return;
+      image.src = images[activeImage];
+      count.textContent = `${activeImage + 1} / ${images.length}`;
+    };
+
+    card.querySelector(".prev")?.addEventListener("click", () => {
+      activeImage = (activeImage - 1 + images.length) % images.length;
+      updateImage();
+    });
+    card.querySelector(".next")?.addEventListener("click", () => {
+      activeImage = (activeImage + 1) % images.length;
+      updateImage();
+    });
+    image?.addEventListener("click", () => openShopImage(images[activeImage], product.name));
+
+    card.querySelector("[data-add]")?.addEventListener("click", () => addToCart(card, product));
+    card.querySelector("[data-buy]")?.addEventListener("click", () => {
+      cart.length = 0;
+      addToCart(card, product);
+      document.getElementById("customerName")?.focus();
+    });
+    card.querySelector("[data-review-form]")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const rating = card.querySelector("[data-rating]").value;
+      const text = card.querySelector("[data-review-text]").value.trim();
+      if (!text) return;
+      saveReview(product.id, { rating, text, date: new Date().toISOString() });
+      renderProducts();
+    });
   });
 }
 
-function productImages(product) { const images = Array.isArray(product.images) ? product.images : [product.image]; const clean = images.filter(Boolean).slice(0, 4); return clean.length ? clean : ["assets/logo.webp"]; }
-function currentProductImage(productId) { const product = shop.products.find((item) => item.id === productId); const image = document.querySelector(`[data-product-image="${productId}"]`); const images = product ? productImages(product) : []; const index = Math.min(Number(image?.dataset.imageIndex || 0), Math.max(images.length - 1, 0)); return { product, src: images[index] || product?.image || "" }; }
-function moveProductImage(productId, direction) { const product = shop.products.find((item) => item.id === productId); if (!product) return; const images = productImages(product); const image = document.querySelector(`[data-product-image="${productId}"]`); const count = document.querySelector(`[data-image-count="${productId}"]`); if (!image || images.length < 2) return; const current = Number(image.dataset.imageIndex || 0); const next = (current + direction + images.length) % images.length; image.dataset.imageIndex = String(next); image.style.display = "block"; image.src = images[next]; if (count) count.textContent = `${next + 1}/${images.length}`; }
-function openProductViewer(productId) { const { product, src } = currentProductImage(productId); if (!product || !src) return; const viewer = document.createElement("div"); viewer.className = "image-viewer"; viewer.innerHTML = `<button class="image-viewer-close" type="button" aria-label="Close full photo">Close</button><figure><div class="viewer-image-wrap"><img src="${src}" alt="${escapeHtml(product.name)}" /><span class="viewer-watermark">Kreative.Adda</span></div><figcaption><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.about || "")}</span></figcaption></figure>`; document.body.append(viewer); document.body.classList.add("viewer-open"); const close = () => { viewer.remove(); document.body.classList.remove("viewer-open"); }; viewer.querySelector(".image-viewer-close").addEventListener("click", close); viewer.addEventListener("click", (event) => { if (event.target === viewer) close(); }); window.addEventListener("keydown", function escapeClose(event) { if (event.key === "Escape") { close(); window.removeEventListener("keydown", escapeClose); } }); }
-function addToCart(productId) { const product = shop.products.find((item) => item.id === productId); if (!product || Number(product.stock || 0) <= 0) return; const qtyInput = document.querySelector(`[data-qty-for="${productId}"]`); const customInput = document.querySelector(`[data-custom-for="${productId}"]`); const stock = Number(product.stock || 0); const quantity = Math.min(Number(qtyInput?.value || 1), stock, 5); cart.push({ ...product, quantity, customRequest: customInput ? customInput.value.trim() : "" }); renderCart(); }
-function renderCart() { if (!hasAvailableProducts) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } cartItems.innerHTML = cart.length ? "" : "<p class='empty-cart'>Cart is empty.</p>"; cart.forEach((item, index) => { const lineTotal = Number(item.price || 0) * Number(item.quantity || 1); const row = document.createElement("div"); row.className = "cart-row"; row.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong><span>Qty ${item.quantity} × ₹${Number(item.price || 0).toLocaleString("en-IN")} = ₹${lineTotal.toLocaleString("en-IN")}</span>${item.customRequest ? `<small>Custom: ${escapeHtml(item.customRequest)}</small>` : ""}</div><button type="button" data-remove="${index}">Remove</button>`; cartItems.append(row); }); const total = getCartTotal(); cartTotal.textContent = `₹${total.toLocaleString("en-IN")}`; if (upiAmount) upiAmount.textContent = `₹${total.toLocaleString("en-IN")}`; renderPaymentOptions(); }
-function getCartTotal() { return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0); }
-function renderPaymentOptions() { if (!hasAvailableProducts || !cart.length) { paymentMode.innerHTML = ""; upiBox.hidden = true; return; } const selected = paymentMode.value; const codAllowed = cart.every((item) => yes(item.codAvailable)); paymentMode.innerHTML = codAllowed ? "<option value='COD'>Cash on Delivery</option><option value='UPI'>Prepaid UPI</option>" : "<option value='UPI'>Prepaid UPI</option>"; if ([...paymentMode.options].some((option) => option.value === selected)) paymentMode.value = selected; updatePaymentUi(); }
-function updatePaymentUi() { const isUpi = paymentMode.value === "UPI"; upiBox.hidden = !isUpi; upiPaid.required = isUpi; upiReference.required = isUpi; }
-function placeOrder(event) { event.preventDefault(); if (!cart.length) { alert("Please add at least one product to cart."); return; } if (paymentMode.value === "UPI" && (!upiPaid.checked || !isValidUpiReference(upiReference.value))) { alert("Please complete UPI payment and enter a valid UPI transaction/reference ID. Common UPI UTR is 12 digits."); return; } const data = new FormData(checkoutForm); const order = { id: createOrderId(), placedAt: new Date().toLocaleString("en-IN"), name: data.get("name"), phone: data.get("phone"), email: data.get("email"), address: data.get("address"), payment: data.get("payment"), upiReference: paymentMode.value === "UPI" ? upiReference.value.trim() : "", products: cart.map((item) => `${item.name} x ${item.quantity}${item.customRequest ? ` - Custom: ${item.customRequest}` : ""}`), total: getCartTotal(), eta: cart.map((item) => item.eta).filter(Boolean).join(" | "), stage: stages[0] }; localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order)); submitOrderToSheet(order); showConfirmation(order); renderTracking(order.stage); openEmailDraft(order); }
-function createOrderId() { const date = new Date(); const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`; const random = Math.random().toString(36).slice(2, 8).toUpperCase(); return `KA-${stamp}-${random}`; }
-function submitOrderToSheet(order) { if (!shop.orderSheetEndpoint) return; const payload = new FormData(); Object.entries({ orderId: order.id, placedAt: order.placedAt, customerName: order.name, phone: order.phone, email: order.email, address: order.address, payment: order.payment, upiReference: order.upiReference, products: order.products.join(" | "), total: order.total, eta: order.eta, stage: order.stage }).forEach(([key, value]) => payload.append(key, value)); fetch(shop.orderSheetEndpoint, { method: "POST", body: payload, mode: "no-cors" }).catch(() => {}); }
-function orderEmailUrl(order) { const to = content.profile?.email || "kreativeadda.avi@gmail.com"; const subject = `Kreative.Adda Order ${order.id}`; const body = `New Kreative.Adda order\n\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}\n\nPlease send this email to confirm the order.`; return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
-function openEmailDraft(order) { window.location.href = orderEmailUrl(order); }
-function showConfirmation(order) { const message = encodeURIComponent(`New Kreative.Adda order\nOrder ID: ${order.id}\nPlaced At: ${order.placedAt}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upiReference || "N/A"}\nProducts: ${order.products.join(", ")}\nTotal: ₹${order.total}\nDelivery ETA: ${order.eta || "As mentioned on product"}`); const emailUrl = orderEmailUrl(order); orderConfirmation.hidden = false; orderConfirmation.innerHTML = `<h3>Order placed: ${order.id}</h3><p>Delivery ETA: ${escapeHtml(order.eta || "As mentioned on product")}</p><p>Your email app should open with the order details ready. Please press Send to confirm the order.</p><div class="private-contact"><p>Seller contact after order</p><a class="contact-pill" href="${emailUrl}" aria-label="Send order email"><span>Send order email</span></a><a class="contact-pill whatsapp-pill" href="https://wa.me/${shop.whatsappNumber}?text=${message}" target="_blank" rel="noreferrer" aria-label="WhatsApp Avi"><span>WhatsApp</span></a><a class="contact-pill call-pill" href="tel:${shop.ownerPhone}" aria-label="Call Avi"><span>Call</span></a><strong>${shop.ownerPhone}</strong></div>`; orderConfirmation.scrollIntoView({ behavior: "smooth", block: "start" }); }
-function renderTracking(activeStage = stages[0]) { trackingSteps.innerHTML = ""; stages.forEach((stage) => { const step = document.createElement("div"); step.className = stage === activeStage ? "tracking-step active" : "tracking-step"; step.textContent = stage; trackingSteps.append(step); }); }
-function renderReviews() { const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]"); reviewList.innerHTML = reviews.length ? "" : "<p class='empty-cart'>No reviews yet.</p>"; reviews.forEach((review) => { const item = document.createElement("article"); item.className = "review-card"; item.innerHTML = `<strong>${escapeHtml(review.name)}</strong><span>${"★".repeat(Number(review.rating))}${"☆".repeat(5 - Number(review.rating))}</span><p>${escapeHtml(review.text)}</p>`; reviewList.append(item); }); }
-function saveReview(event) { event.preventDefault(); const data = new FormData(reviewForm); const reviews = JSON.parse(localStorage.getItem("kreativeAddaReviews") || "[]"); reviews.unshift({ name: data.get("reviewName"), rating: data.get("rating"), text: data.get("review") }); localStorage.setItem("kreativeAddaReviews", JSON.stringify(reviews)); reviewForm.reset(); renderReviews(); }
-function isValidUpiReference(value) { const clean = String(value || "").trim(); return /^\d{12}$/.test(clean) || /^[A-Za-z0-9][A-Za-z0-9/-]{8,24}$/.test(clean); }
-function yes(value) { return String(value || "").trim().toLowerCase() === "yes"; }
-function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+function addToCart(card, product) {
+  const qty = Number(card.querySelector("[data-qty]")?.value || 1);
+  const custom = card.querySelector("[data-custom]")?.value.trim() || "";
+  const existing = cart.find((item) => item.id === product.id && item.custom === custom);
+  if (existing) {
+    existing.qty = Math.min(Number(product.stock || 1), existing.qty + qty, 5);
+  } else {
+    cart.push({ ...product, qty, custom });
+  }
+  renderCart();
+}
 
-shopGrid.addEventListener("click", (event) => { const addId = event.target.dataset.add; const buyId = event.target.dataset.buy; const prevId = event.target.dataset.imagePrev; const nextId = event.target.dataset.imageNext; const viewId = event.target.closest("[data-view-product]")?.dataset.viewProduct; if (prevId) moveProductImage(prevId, -1); else if (nextId) moveProductImage(nextId, 1); else if (addId) addToCart(addId); else if (buyId) { addToCart(buyId); document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" }); } else if (viewId) openProductViewer(viewId); });
-cartItems.addEventListener("click", (event) => { if (event.target.dataset.remove) { cart.splice(Number(event.target.dataset.remove), 1); renderCart(); } });
-document.querySelector("#clearCart").addEventListener("click", () => { cart.splice(0, cart.length); renderCart(); });
-paymentMode.addEventListener("change", updatePaymentUi);
-checkoutForm.addEventListener("submit", placeOrder);
-reviewForm.addEventListener("submit", saveReview);
+function cartTotal() {
+  return cart.reduce((total, item) => total + Number(item.price || 0) * Number(item.qty || 1), 0);
+}
 
-setShopStatus();
+function orderEmailUrl(order) {
+  const email = content.profile?.email || "kreativeadda.avi@gmail.com";
+  const items = order.items.map((item) => `${item.name} x ${item.qty} = ${rupee(item.price * item.qty)}${item.custom ? ` | Custom: ${item.custom}` : ""}`).join("%0D%0A");
+  const subject = encodeURIComponent(`Kreativ.Adda Order ${order.id}`);
+  const body = encodeURIComponent(`New Kreativ.Adda order\n\nOrder ID: ${order.id}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upi || "N/A"}\nTotal: ${rupee(order.total)}\nETA: ${order.eta}\n\nItems:\n${items}\n\nStatus: Order Placed`);
+  return `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+function renderCart() {
+  const hasProducts = products.length > 0;
+  const total = cartTotal();
+  const codAllowed = cart.length > 0 && cart.every((item) => item.cod);
+  const eta = cart.length ? cart.map((item) => item.eta).filter(Boolean).join(", ") || "To be confirmed" : "To be confirmed";
+
+  cartPanel.innerHTML = `
+    <h2>Your Cart</h2>
+    ${cart.length ? cart.map((item, index) => `
+      <div class="cart-line">
+        <span>${item.name} x ${item.qty}</span>
+        <strong>${rupee(item.price * item.qty)}</strong>
+        <button type="button" data-remove="${index}">Remove</button>
+      </div>
+    `).join("") : `<p>${hasProducts ? "Your cart is empty." : "No products available, so payment mode is hidden."}</p>`}
+    ${cart.length ? `
+      <div class="cart-total">Total <strong>${rupee(total)}</strong></div>
+      <form id="orderForm" class="order-form">
+        <label>Name <input id="customerName" required /></label>
+        <label>Phone Number <input id="customerPhone" required /></label>
+        <label>Email <input id="customerEmail" type="email" required /></label>
+        <label>Delivery Address <textarea id="customerAddress" required></textarea></label>
+        <label>Payment Mode
+          <select id="paymentMode">
+            ${codAllowed ? `<option value="COD">COD</option>` : ""}
+            <option value="UPI Prepaid">UPI Prepaid</option>
+          </select>
+        </label>
+        <div id="upiBox" class="upi-box">
+          <img src="${shop.upiQr || "assets/upi-qr.png"}" alt="UPI QR code" />
+          <p>Total to pay: <strong>${rupee(total)}</strong></p>
+          <label>UPI Transaction Reference
+            <input id="upiReference" placeholder="Example: 123456789012" />
+          </label>
+          <p class="fine-print">After paying through your UPI app, enter the transaction reference here. The website checks the format only; final payment confirmation must be verified by admin.</p>
+        </div>
+        <button type="submit">Place Order</button>
+      </form>
+      <div id="orderMessage" class="order-message"></div>
+    ` : ""}
+  `;
+
+  cartPanel.querySelectorAll("[data-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      cart.splice(Number(button.dataset.remove), 1);
+      renderCart();
+    });
+  });
+
+  const paymentMode = document.getElementById("paymentMode");
+  const upiBox = document.getElementById("upiBox");
+  const updatePayment = () => {
+    if (!paymentMode || !upiBox) return;
+    upiBox.style.display = paymentMode.value === "UPI Prepaid" ? "block" : "none";
+  };
+  paymentMode?.addEventListener("change", updatePayment);
+  updatePayment();
+
+  document.getElementById("orderForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const payment = paymentMode.value;
+    const upi = document.getElementById("upiReference")?.value.trim() || "";
+    if (payment === "UPI Prepaid" && !validUpiReference(upi)) {
+      document.getElementById("orderMessage").textContent = "Please enter a valid UPI transaction reference after payment.";
+      return;
+    }
+
+    const order = {
+      id: orderId(),
+      items: [...cart],
+      total,
+      eta,
+      payment,
+      upi,
+      name: document.getElementById("customerName").value.trim(),
+      phone: document.getElementById("customerPhone").value.trim(),
+      email: document.getElementById("customerEmail").value.trim(),
+      address: document.getElementById("customerAddress").value.trim(),
+      status: "Order Placed"
+    };
+    localStorage.setItem("kreativeAddaLastOrder", JSON.stringify(order));
+    showConfirmation(order);
+    window.location.href = orderEmailUrl(order);
+  });
+}
+
+function showConfirmation(order) {
+  const message = document.getElementById("orderMessage");
+  if (!message) return;
+  message.innerHTML = `
+    <strong>Order Placed</strong><br />
+    Order ID: ${order.id}<br />
+    Delivery ETA: ${order.eta}<br />
+    Status: Order Placed<br />
+    Contact after order: <a href="tel:+919457171931">Call</a> <a href="https://wa.me/919457171931">WhatsApp</a><br />
+    Your email app will open with the complete order draft for Kreativ.Adda.
+  `;
+}
+
 renderProducts();
 renderCart();
-renderTracking();
-renderReviews();

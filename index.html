@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=20260610b" />
+  <link rel="stylesheet" href="alignment-fix.css?v=20260610c" />
 </head>
 <body>
-  <audio id="siteMusic" src="assets/site-music.mp3" loop preload="auto"></audio>
+  <audio id="siteMusic" src="assets/background-music.mp3" loop preload="auto"></audio>
 
   <header class="site-header">
     <a class="brand" href="index.html" aria-label="Kreativ.Adda home">
@@ -21,14 +22,14 @@
       <a href="#gallery">Gallery</a>
       <a id="shopNavLink" class="shop-link shop-link-empty" href="shop.html">Shop</a>
       <a href="#links">Links</a>
-      <button class="music-toggle" type="button" aria-pressed="false">Play Music</button>
+      <button id="musicToggle" class="music-toggle" type="button" aria-pressed="false">Play Music</button>
     </nav>
   </header>
 
   <main>
     <section class="hero" id="home">
       <div class="hero-art" aria-hidden="true">
-        <span></span><span></span><span></span>
+        <img src="assets/logo.webp" alt="Kreativ.Adda emblem" />
       </div>
       <div class="hero-content">
         <img class="top-portrait" src="assets/top-photo.png" alt="Avi Narang" />
@@ -94,8 +95,8 @@
     <a href="admin.html">Private Admin</a>
   </footer>
 
-  <script src="shared.js?v=20260610b"></script>
-  <script src="music.js?v=20260610b"></script>
+  <script src="shared.js?v=20260610c"></script>
+  <script src="music.js?v=20260610c"></script>
   <script src="app.js?v=20260610b"></script>
 </body>
 </html>

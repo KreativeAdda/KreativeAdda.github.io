@@ -18,7 +18,7 @@
       ownerPhoto: "assets/owner-photo.jpg"
     },
     music: {
-      src: "assets/site-music.mp3",
+      src: "assets/background-music.mp3",
       enabled: true
     },
     daily: {

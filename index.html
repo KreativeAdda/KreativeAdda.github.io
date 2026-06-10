@@ -1,28 +1,101 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kreative.Adda | Avi Narang</title>
-    <link rel="stylesheet" href="styles.css?v=20260606c" />
-    <style>.shop-status.shop-open{color:#052b13;background:#50fa7b;border-color:#50fa7b;font-weight:900}.shop-status.shop-closed{color:#fff;background:#b4232a;border-color:#ff6b6b;font-weight:900}</style>
-  </head>
-  <body>
-    <div class="noise"></div>
-    <audio id="siteMusic" src="assets/background-music.mp3" loop preload="auto"></audio>
-    <button class="music-toggle" id="musicToggle" type="button" aria-label="Play background music">Music</button>
-    <header class="topbar">
-      <a class="brand" href="#home" aria-label="Kreative.Adda home"><img src="assets/logo.webp" alt="Kreative.Adda logo" /><span>Kreative<span>.Adda</span></span></a>
-      <nav aria-label="Main navigation"><a href="#gallery">Gallery</a><a id="shopNavLink" class="shop-status shop-closed" href="shop.html">Shop</a><a href="#social">Links</a><a href="#contact">Contact</a></nav>
-    </header>
-    <main id="home">
-      <section class="hero"><img class="hero-owner-photo" id="heroOwnerPhoto" src="assets/owner-photo.png" alt="Avi Narang" /><div class="hero-art"><img src="assets/logo.webp" alt="Kreative.Adda emblem" /></div><div class="hero-copy"><p class="eyebrow">Avi Narang presents</p><h1>Kreative<span>.Adda</span></h1><p class="tagline">A Universe of Creativity, Music, Memories &amp; Divine Blessings</p><div class="hero-actions"><a href="#gallery">Explore Adda</a><a class="ghost" href="#about">Meet Avi</a></div><aside class="daily-card" aria-label="Word and thought of the day"><div><p>Word of the day</p><h2 id="dailyWord">Kreative</h2><span id="dailyMeaning">To shape everyday moments into memories, music and art.</span></div><div><p>Thought of the day</p><span id="dailyThought">Every day has one small spark worth saving.</span></div></aside></div></section>
-      <section id="gallery" class="section"><div class="section-heading"><p class="eyebrow">Creative categories</p><h2>Choose a corner of the adda.</h2></div><div class="category-grid" id="categoryGrid"></div><div class="gallery-panel" id="galleryPanel" hidden><div class="gallery-panel-head"><div><p class="eyebrow" id="activeCategoryLabel">Gallery</p><h2 id="activeCategoryTitle">Category</h2></div><button type="button" id="closeGallery">Close</button></div><div class="gallery-grid" id="galleryGrid"></div><p class="empty-state" id="emptyState">No public uploads yet for this category.</p></div></section>
-      <section id="about" class="about-band"><a class="about-photo-wrap" id="ownerPhotoLink" href="assets/owner-photo.jpg" target="_blank" rel="noreferrer" aria-label="Open Avi Narang photo"><img id="ownerPhoto" src="assets/owner-photo.jpg" alt="Avi Narang" /></a><div><p class="eyebrow">About me</p><h2 id="aboutTitle">Avi Narang</h2><p id="aboutText">Welcome to my personal creative adda: a colorful space for food, photos, natak, sargam, photography and all the little memories that deserve a place of their own.</p></div></section>
-      <section id="social" class="social-section"><div class="section-heading"><p class="eyebrow">Connect</p><h2>Follow the creative trail.</h2></div><div class="social-links"><a id="youtubeLink" href="#" target="_blank" rel="noreferrer" aria-label="YouTube"><span class="social-icon youtube-icon" aria-hidden="true"></span></a><a id="instagramLink" href="#" target="_blank" rel="noreferrer" aria-label="Instagram"><span class="social-icon instagram-icon" aria-hidden="true"></span></a></div></section>
-      <section id="contact" class="contact-band"><p class="eyebrow">Contact</p><h2>Let the conversation begin.</h2><a id="contactEmail" href="mailto:">Add email address</a></section>
-    </main>
-    <footer><span class="footer-credit">Kreative.Adda by Avi Narang <img class="footer-logo" src="assets/footer-logo.png" alt="Avi Narang personal logo" /></span></footer>
-    <script src="shared.js?v=20260606c"></script><script src="music.js?v=20260606c"></script><script src="app.js?v=20260606c"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kreativ.Adda | Avi Narang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260610a" />
+</head>
+<body>
+  <audio id="siteMusic" src="assets/site-music.mp3" loop preload="auto"></audio>
+
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Kreativ.Adda home">
+      <img src="assets/logo.webp" alt="Kreativ.Adda logo" />
+      <span>Kreativ<span>.Adda</span></span>
+    </a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="#gallery">Gallery</a>
+      <a id="shopNavLink" class="shop-link shop-link-empty" href="shop.html">Shop</a>
+      <a href="#links">Links</a>
+      <button class="music-toggle" type="button" aria-pressed="false">Play Music</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-art" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="hero-content">
+        <img class="top-portrait" src="assets/top-photo.png" alt="Avi Narang" />
+        <p class="eyebrow">Avi Narang Presents</p>
+        <img class="hero-logo" src="assets/logo.webp" alt="Kreativ.Adda emblem" />
+        <h1>Kreativ<span>.Adda</span></h1>
+        <p class="tagline">A Universe of Creativity, Music, Memories &amp; Divine Blessings</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#gallery">Explore Adda</a>
+          <a class="button secondary" href="#about">Meet Avi</a>
+        </div>
+        <div class="daily-card" aria-label="Daily word and thought">
+          <div>
+            <p class="section-kicker">Word of the Day</p>
+            <h2 id="dailyWord">Kreativ</h2>
+            <p id="dailyMeaning">A spark of originality shaped with heart.</p>
+          </div>
+          <div>
+            <p class="section-kicker">Thought of the Day</p>
+            <p id="dailyThought">Create something small today; it may become a memory tomorrow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="category-strip" id="gallery">
+      <div class="section-heading">
+        <p class="section-kicker">Choose A Space</p>
+        <h2>Every Mood Has Its Own Adda</h2>
+      </div>
+      <div class="category-grid" id="categoryGrid"></div>
+    </section>
+
+    <section class="about-section" id="about">
+      <div class="about-photo-wrap">
+        <img class="about-photo" src="assets/owner-photo.jpg?v=20260606b" alt="Avi Narang" />
+      </div>
+      <div>
+        <p class="section-kicker">About Me</p>
+        <h2 id="aboutName">Avi Narang</h2>
+        <p id="aboutBio">Welcome to my creative universe. This is where food, memories, music, acting, devotion, photography and everyday experiments come together.</p>
+      </div>
+    </section>
+
+    <section class="links-section" id="links">
+      <div>
+        <p class="section-kicker">Connect</p>
+        <h2>Follow The Journey</h2>
+      </div>
+      <div class="social-links" id="socialLinks"></div>
+    </section>
+
+    <section class="contact-section" id="contact">
+      <p class="section-kicker">Contact</p>
+      <h2>Reach Avi</h2>
+      <a id="contactEmail" class="button primary" href="mailto:kreativeadda.avi@gmail.com">Add Email Address</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Kreativ.Adda by Avi Narang</span>
+    <img class="footer-logo" src="assets/footer-logo.png" alt="Avi Narang mark" />
+    <a href="admin.html">Private Admin</a>
+  </footer>
+
+  <script src="shared.js?v=20260610a"></script>
+  <script src="music.js?v=20260610a"></script>
+  <script src="app.js?v=20260610a"></script>
+</body>
 </html>

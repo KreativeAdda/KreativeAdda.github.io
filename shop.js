@@ -251,7 +251,7 @@ function cartTotal() {
 }
 
 function orderEmailUrl(order) {
-  const email = content.profile?.email || "kreativeadda.avi@gmail.com";
+  const email = content.profile?.email || "Kreativadda.avi@gmail.com";
   const items = order.items.map((item) => `${item.name} x ${item.qty} = ${rupee(item.price * item.qty)}${item.custom ? ` | Custom: ${item.custom}` : ""}`).join("%0D%0A");
   const subject = encodeURIComponent(`Kreativ.Adda Order ${order.id}`);
   const body = encodeURIComponent(`New Kreativ.Adda order\n\nOrder ID: ${order.id}\nName: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\nPayment: ${order.payment}\nUPI Reference: ${order.upi || "N/A"}\nTotal: ${rupee(order.total)}\nETA: ${order.eta}\n\nItems:\n${items}\n\nStatus: Order Placed`);

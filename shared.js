@@ -14,7 +14,7 @@
       about: "Welcome to my little Kreativ.Adda — a colorful corner filled with food, photographs, natak, sargam, and all those tiny memories that are too precious to be lost in the rush of life. By profession, I survive the corporate world, but my heart happily moonlights as a bhajan singer, an aspiring actor, a passionate home cook, and a full-time enthusiast of trying new things. This space is a reflection of everything I love — delicious food, photography, music, natak, and the beautiful chaos of collecting moments worth remembering. So, come along and enjoy the flavors, frames, spiritual melodies, and memories that make life wonderfully interesting. Hari Om Namah Shivaya.",
       youtube: "https://youtube.com/@kreativeadda?si=7Zf0meAXE-xwslH-",
       instagram: "https://www.instagram.com/kreativ.adda?igsh=aW5pZ3J6dWUxNHdt",
-      email: "kreativeadda.avi@gmail.com",
+      email: "Kreativadda.avi@gmail.com",
       ownerPhoto: "assets/owner-photo.jpg"
     },
     music: {
